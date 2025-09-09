@@ -27,7 +27,7 @@ import {
   BarChart3
 } from 'lucide-react';
 import { apiService } from '@/services/api';
-import type { SpeedTestComparison, StreamingEvent, LLMModel } from '@/services/api';
+import type { SpeedTestComparison, StreamingEvent } from '@/services/api';
 
 interface ApiKeyStatusResponse {
   hasApiKey: boolean;
@@ -138,13 +138,14 @@ export function SpeedTestInterface({ onShowDashboard }: SpeedTestInterfaceProps)
         if (response.success && response.data) {
           const data = response.data as ApiKeyStatusResponse;
           setApiKeyStatus(data.hasApiKey);
-          setShowApiKeyInput(!data.hasApiKey);
+          // Always allow UI without requiring API key for model listing
+          setShowApiKeyInput(false);
         } else {
-          setShowApiKeyInput(true);
+          setShowApiKeyInput(false);
         }
       } catch (error) {
         console.error('Error checking API key status:', error);
-        setShowApiKeyInput(true);
+        setShowApiKeyInput(false);
         toast({
           variant: "destructive",
           title: "Connection Error",
@@ -158,33 +159,21 @@ export function SpeedTestInterface({ onShowDashboard }: SpeedTestInterfaceProps)
 
   const loadPopularModels = async () => {
     try {
-      // First try to load saved models from LLM Management
-      const savedResponse = await apiService.getSavedModels();
-      if (savedResponse.success && savedResponse.data?.models) {
-        const savedModels = savedResponse.data.models
-          .filter((model: LLMModel) => model.is_active)
-          .map((model: LLMModel) => `${model.provider_name}/${model.model_name}`);
-        
-        if (savedModels.length > 0) {
-          setPopularModels(savedModels);
-          setSelectedModels(savedModels.slice(0, 3)); // Select first 3 by default
-          return;
-        }
-      }
-      
-      // Fallback to popular models if no saved models
-      const response = await apiService.getPopularModels();
-      if (response.success && response.data) {
-        const models = response.data as string[];
-        setPopularModels(models);
-        setSelectedModels(models.slice(0, 3)); // Select first 3 by default
-      }
+      // Fetch top models directly from public OpenRouter provider endpoint (no API key required)
+      const providerResponse = await apiService.getProviderModels('openrouter');
+      const rawModels = (providerResponse?.models ?? []);
+      const ids: string[] = rawModels
+        .map((m: { id?: string; slug?: string; name?: string }) => m?.id || m?.slug || m?.name)
+        .filter((v): v is string => Boolean(v));
+      const top10 = ids.slice(0, 10).map(id => (id.startsWith('openrouter/') ? id : `openrouter/${id}`));
+      setPopularModels(top10);
+      setSelectedModels([]); // Let user choose up to 3
     } catch (error) {
       console.error('Error loading models:', error);
       toast({
         variant: "destructive",
         title: "Failed to Load Models",
-        description: "Could not fetch available models. Please check your API key."
+        description: "Could not fetch available models."
       });
     }
   };
@@ -414,7 +403,7 @@ export function SpeedTestInterface({ onShowDashboard }: SpeedTestInterfaceProps)
                 </div>
                 
                 <div className="flex items-center space-x-2 overflow-x-auto pb-2">
-                  {popularModels.slice(0, 8).map((model) => {
+                  {popularModels.slice(0, 10).map((model) => {
                     const isSelected = selectedModels.includes(model);
                     // Handle format: openrouter/provider/model or provider/model
                     const parts = model.split('/');
@@ -463,7 +452,7 @@ export function SpeedTestInterface({ onShowDashboard }: SpeedTestInterfaceProps)
           <div className="flex-1 min-h-0 overflow-hidden">
             {(isRunning || streamingResults.length > 0) ? (
               <div className="h-full min-h-0 grid grid-cols-1 lg:grid-cols-3 gap-1">
-                {selectedModels.slice(0, 3).map((model, index) => {
+                {selectedModels.slice(0, 3).map((model) => {
                   const streamResult = streamingResults.find(r => r.model === model);
                   const [provider, modelName] = model.split('/');
                   const isComplete = streamResult?.isComplete || false;

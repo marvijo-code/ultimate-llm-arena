@@ -108,7 +108,7 @@ class ApiService {
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
     const url = `${API_BASE_URL}${endpoint}`;
-    
+
     const response = await fetch(url, {
       headers: {
         'Content-Type': 'application/json',
@@ -192,6 +192,23 @@ class ApiService {
   async getSavedModels() {
     return this.request<LLMModelsResponse>('/api/llm/models');
   }
+  async getProviderModels(providerName: string): Promise<{ models: any[] }> {
+    const url = `${API_BASE_URL}/api/llm/providers/${providerName}/models`;
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if (!response.ok) {
+      try {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      } catch {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+    }
+    return await response.json();
+  }
+
 
   // Streaming speed test
   async runStreamingSpeedTest(
@@ -199,7 +216,7 @@ class ApiService {
     onEvent: (event: StreamingEvent) => void
   ): Promise<void> {
     const url = `${API_BASE_URL}/api/speed-test/run-stream`;
-    
+
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -233,7 +250,7 @@ class ApiService {
           if (line.startsWith('data: ')) {
             const data = line.slice(6);
             if (data === '[DONE]') continue;
-            
+
             try {
               const event: StreamingEvent = JSON.parse(data);
               onEvent(event);
@@ -266,10 +283,10 @@ class ApiService {
       limit: limit.toString(),
       offset: offset.toString(),
     });
-    
+
     if (startDate) params.append('startDate', startDate);
     if (endDate) params.append('endDate', endDate);
-    
+
     return this.request<RunHistory[]>(`/api/run-history?${params}`);
   }
 
@@ -277,7 +294,7 @@ class ApiService {
     const params = new URLSearchParams();
     if (startDate) params.append('startDate', startDate);
     if (endDate) params.append('endDate', endDate);
-    
+
     const queryString = params.toString();
     return this.request<RunStats[]>(`/api/run-stats${queryString ? '?' + queryString : ''}`);
   }

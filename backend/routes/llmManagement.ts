@@ -80,16 +80,36 @@ export class LLMManagementHandler {
 
   // Fetch models from provider API
   static async fetchProviderModels(providerName: string, apiKey?: string): Promise<{ models: any[] }> {
-    const config = PROVIDER_CONFIGS[providerName as keyof typeof PROVIDER_CONFIGS];
-    
+    const normalized = providerName.toLowerCase();
+    const config = PROVIDER_CONFIGS[normalized as keyof typeof PROVIDER_CONFIGS];
+
     if (!config) {
       throw new Error(`Unsupported provider: ${providerName}`);
     }
 
     // For providers without public endpoints, return predefined models
     if (!config.modelsEndpoint) {
-      const models = config.parseModels();
+      const models = config.parseModels(undefined as any);
       return { models };
+    }
+
+    // Special case: OpenRouter models endpoint is public; allow no API key
+    if (normalized === "openrouter" && !apiKey) {
+      try {
+        const response = await fetch(config.modelsEndpoint, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          const models = config.parseModels(data);
+          return { models };
+        }
+        // If OpenRouter ever requires a key, fall through to key-required path
+      } catch (e) {
+        console.error("Error fetching OpenRouter models without API key:", e);
+        // Fall through
+      }
     }
 
     if (!apiKey) {
@@ -111,7 +131,7 @@ export class LLMManagementHandler {
 
       const data = await response.json();
       const models = config.parseModels(data);
-      
+
       return { models };
     } catch (error) {
       console.error(`Error fetching models for ${providerName}:`, error);
