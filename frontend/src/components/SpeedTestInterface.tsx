@@ -27,7 +27,7 @@ import {
   BarChart3
 } from 'lucide-react';
 import { apiService } from '@/services/api';
-import type { SpeedTestComparison, StreamingEvent, LLMModel } from '@/services/api';
+import type { SpeedTestComparison, StreamingEvent, LLMModel, OpenRouterModel } from '@/services/api';
 
 interface ApiKeyStatusResponse {
   hasApiKey: boolean;
@@ -121,7 +121,7 @@ export function SpeedTestInterface({ onShowDashboard }: SpeedTestInterfaceProps)
   const [streamingResults, setStreamingResults] = useState<StreamingResult[]>([]);
   const [popularModels, setPopularModels] = useState<string[]>([]);
   const [isRunning, setIsRunning] = useState(false);
-  const [results, setResults] = useState<SpeedTestComparison | null>(null);
+  const [, setResults] = useState<SpeedTestComparison | null>(null);
   const [apiKey, setApiKey] = useState('');
   const [showApiKeyInput, setShowApiKeyInput] = useState(false);
   const [, setApiKeyStatus] = useState(false);
@@ -131,34 +131,23 @@ export function SpeedTestInterface({ onShowDashboard }: SpeedTestInterfaceProps)
     const randomPrompt = ALL_PROMPTS[Math.floor(Math.random() * ALL_PROMPTS.length)];
     setPrompt(randomPrompt);
 
-    // Check API key status
-    const checkApiKeyStatus = async () => {
-      try {
-        const response = await apiService.getApiKeyStatus();
-        if (response.success && response.data) {
-          const data = response.data as ApiKeyStatusResponse;
-          setApiKeyStatus(data.hasApiKey);
-          setShowApiKeyInput(!data.hasApiKey);
-        } else {
-          setShowApiKeyInput(true);
-        }
-      } catch (error) {
-        console.error('Error checking API key status:', error);
-        setShowApiKeyInput(true);
-        toast({
-          variant: "destructive",
-          title: "Connection Error",
-          description: "Failed to check API key status. Please check your connection."
-        });
-      }
-    };
-
-    checkApiKeyStatus();
+    // Skip API key check since we're using public endpoint
+    setShowApiKeyInput(false);
+    setApiKeyStatus(true);
   }, []);
 
   const loadPopularModels = async () => {
     try {
-      // First try to load saved models from LLM Management
+      // Load top 10 models from OpenRouter without API key
+      const response = await apiService.getTopModels();
+      if (response.success && response.models) {
+        const models = response.models.map((model: OpenRouterModel) => model.id);
+        setPopularModels(models);
+        setSelectedModels(models.slice(0, 3)); // Select first 3 by default
+        return;
+      }
+      
+      // Fallback to saved models from LLM Management
       const savedResponse = await apiService.getSavedModels();
       if (savedResponse.success && savedResponse.data?.models) {
         const savedModels = savedResponse.data.models
@@ -172,10 +161,10 @@ export function SpeedTestInterface({ onShowDashboard }: SpeedTestInterfaceProps)
         }
       }
       
-      // Fallback to popular models if no saved models
-      const response = await apiService.getPopularModels();
-      if (response.success && response.data) {
-        const models = response.data as string[];
+      // Final fallback to popular models endpoint
+      const popularResponse = await apiService.getPopularModels();
+      if (popularResponse.success && popularResponse.data) {
+        const models = popularResponse.data as string[];
         setPopularModels(models);
         setSelectedModels(models.slice(0, 3)); // Select first 3 by default
       }
@@ -184,7 +173,7 @@ export function SpeedTestInterface({ onShowDashboard }: SpeedTestInterfaceProps)
       toast({
         variant: "destructive",
         title: "Failed to Load Models",
-        description: "Could not fetch available models. Please check your API key."
+        description: "Could not fetch available models from OpenRouter."
       });
     }
   };
@@ -463,7 +452,7 @@ export function SpeedTestInterface({ onShowDashboard }: SpeedTestInterfaceProps)
           <div className="flex-1 min-h-0 overflow-hidden">
             {(isRunning || streamingResults.length > 0) ? (
               <div className="h-full min-h-0 grid grid-cols-1 lg:grid-cols-3 gap-1">
-                {selectedModels.slice(0, 3).map((model, index) => {
+                {selectedModels.slice(0, 3).map((model) => {
                   const streamResult = streamingResults.find(r => r.model === model);
                   const [provider, modelName] = model.split('/');
                   const isComplete = streamResult?.isComplete || false;

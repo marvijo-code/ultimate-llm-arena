@@ -129,7 +129,49 @@ app.use(async (ctx, next) => {
     }
   }
 
-  // Provider models
+  // Provider models (public endpoint for OpenRouter without API key)
+  if (path === "/api/llm/providers/openrouter/models" && method === "GET") {
+    try {
+      // Fetch models directly from OpenRouter's public API without requiring API key
+      const response = await fetch("https://openrouter.ai/api/v1/models", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json"
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const models = data.data || [];
+      
+      // Sort by popularity/context length and get top 10
+      const topModels = models
+        .filter((model: any) => model.id && !model.id.includes('free') && !model.id.includes('nitro'))
+        .sort((a: any, b: any) => {
+          // Sort by context length (higher is better) and then by name
+          const aContext = a.context_length || 0;
+          const bContext = b.context_length || 0;
+          if (bContext !== aContext) return bContext - aContext;
+          return a.id.localeCompare(b.id);
+        })
+        .slice(0, 10);
+      
+      ctx.response.body = {
+        success: true,
+        models: topModels
+      };
+      return;
+    } catch (error) {
+      ctx.response.status = 500;
+      ctx.response.body = { error: error instanceof Error ? error.message : "Failed to fetch models" };
+      return;
+    }
+  }
+
+  // Provider models (original endpoint with API key)
   if (path.match(/^\/api\/llm\/providers\/[^\/]+\/models$/) && (method === "GET" || method === "POST")) {
     try {
       const name = path.split("/")[4];

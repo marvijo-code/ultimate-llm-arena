@@ -26,6 +26,21 @@ export interface LLMModelsResponse {
   models: LLMModel[];
 }
 
+export interface OpenRouterModel {
+  id: string;
+  name?: string;
+  context_length?: number;
+  pricing?: {
+    prompt: string;
+    completion: string;
+  };
+}
+
+export interface TopModelsResponse {
+  success: boolean;
+  models: OpenRouterModel[];
+}
+
 export interface SpeedTestRequest {
   prompt: string;
   models: string[];
@@ -134,6 +149,12 @@ class ApiService {
   // OpenRouter API endpoints
   async getModels() {
     return this.request('/api/openrouter/models');
+  }
+
+  // Get top 10 OpenRouter models without API key
+  async getTopModels(): Promise<TopModelsResponse> {
+    const response = await this.request('/api/llm/providers/openrouter/models');
+    return response as TopModelsResponse;
   }
 
   async testConnection(apiKey: string) {
