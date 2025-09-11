@@ -20,8 +20,9 @@ cleanup() {
 trap cleanup SIGINT SIGTERM
 
 # Start backend
-echo "Starting backend..."
+echo "Starting backend on port 6100..."
 cd backend
+export PORT=6100
 deno task dev &
 BACKEND_PID=$!
 cd ..
@@ -30,7 +31,7 @@ cd ..
 sleep 2
 
 # Start frontend
-echo "Starting frontend..."
+echo "Starting frontend on port 6001..."
 cd frontend
 npm run dev &
 FRONTEND_PID=$!
@@ -39,8 +40,8 @@ cd ..
 echo ""
 echo "================================================"
 echo "LLM Speed Test is now running!"
-echo "Frontend: http://localhost:5173"
-echo "Backend:  http://localhost:8000"
+echo "Frontend: http://localhost:6001"
+echo "Backend:  http://localhost:6100"
 echo "================================================"
 echo ""
 echo "Press Ctrl+C to stop all services"

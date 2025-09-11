@@ -11,6 +11,8 @@ export default defineConfig({
     },
   },
   server: {
+    port: 6001,
+    strictPort: true,
     fs: {
       // Allow serving files from the project root
       strict: false

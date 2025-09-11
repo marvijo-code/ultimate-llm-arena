@@ -59,10 +59,34 @@ interface LLMModel {
   created_at: string;
 }
 
+interface CodeEvalResult {
+  model: string;
+  code: string;
+  lintWarnings: number;
+  lintErrors: number;
+  compileError?: string;
+  testsPassed: number;
+  testsTotal: number;
+  score: number;
+  error?: string;
+}
+
+interface CodeEvalRun {
+  id: number;
+  exerciseId: string;
+  exerciseName: string;
+  testCount: number;
+  models: string[];
+  results: CodeEvalResult[];
+  created_at: string;
+}
+
+
 class InMemoryDB {
   private apiKeys: any[] = [];
   private testResults: any[] = [];
   private runHistory: RunHistory[] = [];
+  private codeEvalRuns: CodeEvalRun[] = [];
   private providers: any[] = [
     {
       id: 1,
@@ -134,6 +158,7 @@ class InMemoryDB {
     testResults: 1,
     providers: 2,
     runHistory: 1,
+    codeEvalRuns: 1,
     llmProviders: 7,
     llmModels: 1
   };
@@ -146,7 +171,7 @@ class InMemoryDB {
     // Initialize with API key from environment or .env file
     if (this.apiKeys.length === 0) {
       let apiKey = this.loadApiKeyFromEnv();
-      
+
       this.apiKeys.push({
         id: this.nextId.apiKeys++,
         provider: "OpenRouter",
@@ -160,15 +185,15 @@ class InMemoryDB {
 
   private loadApiKeyFromEnv(): string {
     let apiKey = "";
-    
+
     try {
       // Try to load from .env file first
       const envPaths = ['.env.local', '.env'];
-      
+
       for (const envPath of envPaths) {
         try {
           let envContent: string | null = null;
-          
+
           // Deno environment
           if (typeof (globalThis as any).Deno !== 'undefined') {
             try {
@@ -190,7 +215,7 @@ class InMemoryDB {
               continue; // File doesn't exist or fs not available
             }
           }
-          
+
           if (envContent) {
             const lines = envContent.split('\n');
             for (const line of lines) {
@@ -205,7 +230,7 @@ class InMemoryDB {
           // Continue to next file
         }
       }
-      
+
       // Fallback to environment variables
       if (typeof (globalThis as any).Deno !== 'undefined') {
         apiKey = (globalThis as any).Deno.env.get("OPENROUTER_API_KEY") || "";
@@ -216,7 +241,7 @@ class InMemoryDB {
       // Final fallback
       apiKey = "";
     }
-    
+
     return apiKey;
   }
 
@@ -230,12 +255,12 @@ class InMemoryDB {
       }
       return [...this.apiKeys] as T[];
     }
-    
+
     if (sql.includes("SELECT * FROM test_results")) {
       const limit = params[0] || 50;
       return [...this.testResults].reverse().slice(0, limit) as T[];
     }
-    
+
     if (sql.includes("SELECT * FROM providers")) {
       return [...this.providers] as T[];
     }
@@ -281,7 +306,7 @@ class InMemoryDB {
       }
       return [...this.llmModels] as T[];
     }
-    
+
     return [];
   }
 
@@ -320,7 +345,7 @@ class InMemoryDB {
     if (sql.includes("UPDATE api_keys")) {
       const id = params[params.length - 1];
       const keyIndex = this.apiKeys.findIndex(k => k.id === id);
-      
+
       if (keyIndex !== -1) {
         if (params.length > 1) {
           this.apiKeys[keyIndex].key_value = params[0];
@@ -460,7 +485,7 @@ class InMemoryDB {
 
   getRunStats(startDate?: string, endDate?: string): RunStats[] {
     let filteredRuns = this.runHistory;
-    
+
     if (startDate && endDate) {
       filteredRuns = this.getRunHistoryByDateRange(startDate, endDate, 1000);
     }
@@ -505,24 +530,40 @@ class InMemoryDB {
 
     return Array.from(modelStats.entries()).map(([model, stats]) => ({
       model,
-      avgResponseTime: stats.responseTimes.length > 0 
-        ? stats.responseTimes.reduce((a, b) => a + b, 0) / stats.responseTimes.length 
+      avgResponseTime: stats.responseTimes.length > 0
+        ? stats.responseTimes.reduce((a, b) => a + b, 0) / stats.responseTimes.length
         : 0,
-      avgTokensPerSecond: stats.tokensPerSecond.length > 0 
-        ? stats.tokensPerSecond.reduce((a, b) => a + b, 0) / stats.tokensPerSecond.length 
+      avgTokensPerSecond: stats.tokensPerSecond.length > 0
+        ? stats.tokensPerSecond.reduce((a, b) => a + b, 0) / stats.tokensPerSecond.length
         : 0,
-      avgLatency: stats.latencies.length > 0 
-        ? stats.latencies.reduce((a, b) => a + b, 0) / stats.latencies.length 
+      avgLatency: stats.latencies.length > 0
+        ? stats.latencies.reduce((a, b) => a + b, 0) / stats.latencies.length
         : 0,
-      avgTokens: stats.tokens.length > 0 
-        ? stats.tokens.reduce((a, b) => a + b, 0) / stats.tokens.length 
+      avgTokens: stats.tokens.length > 0
+        ? stats.tokens.reduce((a, b) => a + b, 0) / stats.tokens.length
         : 0,
-      avgReasoningTokens: stats.reasoningTokens.length > 0 
-        ? stats.reasoningTokens.reduce((a, b) => a + b, 0) / stats.reasoningTokens.length 
+      avgReasoningTokens: stats.reasoningTokens.length > 0
+        ? stats.reasoningTokens.reduce((a, b) => a + b, 0) / stats.reasoningTokens.length
         : 0,
       totalRuns: stats.totalRuns,
       successRate: stats.totalRuns > 0 ? (stats.successfulRuns / stats.totalRuns) * 100 : 0
     }));
+  }
+
+
+  // Code evaluation runs
+  saveCodeEvalRun(run: Omit<CodeEvalRun, "id" | "created_at">): number {
+    const newRun: CodeEvalRun = {
+      id: this.nextId.codeEvalRuns++,
+      ...run,
+      created_at: new Date().toISOString(),
+    };
+    this.codeEvalRuns.push(newRun);
+    return newRun.id;
+  }
+
+  getCodeEvalRuns(limit: number = 50): CodeEvalRun[] {
+    return [...this.codeEvalRuns].reverse().slice(0, limit);
   }
 
   // LLM Provider methods

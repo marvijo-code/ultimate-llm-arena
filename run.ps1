@@ -20,8 +20,8 @@ try {
     exit 1
 }
 
-# Set environment variables
-$env:OPENROUTER_API_KEY = $env:OPENROUTER_API_KEY ?? ""
+# Set environment variables (PowerShell-safe)
+if (-not $env:OPENROUTER_API_KEY) { $env:OPENROUTER_API_KEY = "" }
 
 # Create logs directory if it doesn't exist
 if (!(Test-Path -Path "logs")) {
@@ -40,9 +40,10 @@ function Cleanup {
 Register-EngineEvent -SourceIdentifier PowerShell.Exiting -Action { Cleanup } | Out-Null
 
 # Start backend
-Write-Host "🔧 Starting Deno backend on port 8000..." -ForegroundColor Blue
+Write-Host "🔧 Starting Deno backend on port 6100..." -ForegroundColor Blue
 Start-Job -Name "Backend" -ScriptBlock {
     Set-Location $using:PWD\backend
+    $env:PORT = "6100"
     deno run --allow-net --allow-env --allow-read --watch main.ts *> ..\logs\backend.log
 } | Out-Null
 
@@ -51,7 +52,7 @@ Write-Host "⏳ Waiting for backend to start..." -ForegroundColor Yellow
 Start-Sleep -Seconds 3
 
 # Start frontend
-Write-Host "⚡ Starting Vite frontend on port 5173..." -ForegroundColor Blue
+Write-Host "⚡ Starting Vite frontend on port 6001..." -ForegroundColor Blue
 Start-Job -Name "Frontend" -ScriptBlock {
     Set-Location $using:PWD\frontend
     npm run dev *> ..\logs\frontend.log
@@ -59,8 +60,8 @@ Start-Job -Name "Frontend" -ScriptBlock {
 
 Write-Host ""
 Write-Host "✅ Development servers started!" -ForegroundColor Green
-Write-Host "📊 Backend: http://localhost:8000" -ForegroundColor Cyan
-Write-Host "🎨 Frontend: http://localhost:5173" -ForegroundColor Cyan
+Write-Host "📊 Backend: http://localhost:6100" -ForegroundColor Cyan
+Write-Host "🎨 Frontend: http://localhost:6001" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "📋 Logs are being written to:" -ForegroundColor Gray
 Write-Host "   - logs\backend.log" -ForegroundColor Gray

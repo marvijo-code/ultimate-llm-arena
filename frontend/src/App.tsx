@@ -4,16 +4,17 @@ import { ThemeToggle } from '@/components/theme-toggle'
 import { SpeedTestInterface } from '@/components/SpeedTestInterface'
 import { Dashboard } from '@/components/Dashboard'
 import LLMManagement from '@/components/LLMManagement'
+import ExercismArena from '@/components/ExercismArena'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Toaster } from '@/components/ui/toaster'
 import { Activity, Zap, Settings, ArrowLeft } from 'lucide-react'
 
 function App() {
-  const [currentView, setCurrentView] = useState<'arena' | 'dashboard' | 'llm-management'>('arena');
+  const [currentView, setCurrentView] = useState<'arena' | 'dashboard' | 'llm-management' | 'exercism'>('arena');
 
   return (
-    <ThemeProvider defaultTheme="system" storageKey="llm-speed-test-theme">
+    <ThemeProvider defaultTheme="dark" storageKey="llm-speed-test-theme">
       <div className="h-screen flex flex-col bg-background">
         {/* Compact Header */}
         <header className="flex-shrink-0 border-b bg-background/95 backdrop-blur">
@@ -42,14 +43,23 @@ function App() {
             </div>
             <div className="flex items-center space-x-2">
               {currentView === 'arena' && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setCurrentView('llm-management')}
-                >
-                  <Settings className="h-4 w-4 mr-1" />
-                  Manage LLMs
-                </Button>
+                <>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setCurrentView('exercism')}
+                  >
+                    Exercism
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setCurrentView('llm-management')}
+                  >
+                    <Settings className="h-4 w-4 mr-1" />
+                    Manage LLMs
+                  </Button>
+                </>
               )}
               <ThemeToggle />
             </div>
@@ -62,6 +72,8 @@ function App() {
             <SpeedTestInterface onShowDashboard={() => setCurrentView('dashboard')} />
           ) : currentView === 'dashboard' ? (
             <Dashboard onBack={() => setCurrentView('arena')} />
+          ) : currentView === 'exercism' ? (
+            <ExercismArena onBack={() => setCurrentView('arena')} />
           ) : (
             <LLMManagement />
           )}

@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:6100';
 
 export interface ApiResponse<T = any> {
   success: boolean;
@@ -117,13 +117,43 @@ export interface RunStats {
   avgReasoningTokens: number;
 }
 
+
+export interface Exercise {
+  id: string;
+  name: string;
+  language: string;
+  totalTests: number;
+}
+
+export interface CodeEvalResult {
+  model: string;
+  code: string;
+  lintWarnings: number;
+  lintErrors: number;
+  compileError?: string;
+  testsPassed: number;
+  testsTotal: number;
+  score: number;
+  error?: string;
+}
+
+export interface CodeEvalRun {
+  id: number;
+  exerciseId: string;
+  exerciseName: string;
+  testCount: number;
+  models: string[];
+  results: CodeEvalResult[];
+  created_at: string;
+}
+
 class ApiService {
   private async request<T>(
     endpoint: string,
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
     const url = `${API_BASE_URL}${endpoint}`;
-    
+
     const response = await fetch(url, {
       headers: {
         'Content-Type': 'application/json',
@@ -220,7 +250,7 @@ class ApiService {
     onEvent: (event: StreamingEvent) => void
   ): Promise<void> {
     const url = `${API_BASE_URL}/api/speed-test/run-stream`;
-    
+
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -254,7 +284,7 @@ class ApiService {
           if (line.startsWith('data: ')) {
             const data = line.slice(6);
             if (data === '[DONE]') continue;
-            
+
             try {
               const event: StreamingEvent = JSON.parse(data);
               onEvent(event);
@@ -274,6 +304,27 @@ class ApiService {
     return this.request<TestResult[]>(`/api/test-results?limit=${limit}`);
   }
 
+
+  // Exercism evaluation endpoints
+  async getExercises() {
+    return this.request<Exercise[] | { exercises: Exercise[] }>(`/api/exercism/exercises`);
+  }
+
+  async runExercism(exerciseId: string, models: string[], testCount?: number) {
+    return this.request<{ runId: number; exerciseId: string; exerciseName: string; testCount: number; results: CodeEvalResult[] }>(
+      '/api/exercism/run',
+      {
+        method: 'POST',
+        body: JSON.stringify({ exerciseId, models, testCount }),
+      }
+    );
+  }
+
+  async getExercismHistory(limit = 50) {
+    return this.request<CodeEvalRun[]>(`/api/exercism/history?limit=${limit}`);
+  }
+
+
   // Run history endpoints
   async saveRunHistory(prompt: string, models: string[], results: any[]) {
     return this.request('/api/run-history', {
@@ -287,10 +338,10 @@ class ApiService {
       limit: limit.toString(),
       offset: offset.toString(),
     });
-    
+
     if (startDate) params.append('startDate', startDate);
     if (endDate) params.append('endDate', endDate);
-    
+
     return this.request<RunHistory[]>(`/api/run-history?${params}`);
   }
 
@@ -298,7 +349,7 @@ class ApiService {
     const params = new URLSearchParams();
     if (startDate) params.append('startDate', startDate);
     if (endDate) params.append('endDate', endDate);
-    
+
     const queryString = params.toString();
     return this.request<RunStats[]>(`/api/run-stats${queryString ? '?' + queryString : ''}`);
   }

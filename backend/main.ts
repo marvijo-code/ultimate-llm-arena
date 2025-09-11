@@ -2,6 +2,7 @@ import { Application } from "https://deno.land/x/oak@v12.6.1/mod.ts";
 import { oakCors } from "https://deno.land/x/cors@v1.2.2/mod.ts";
 import openRouterRoutes from "./routes/openRouter.ts";
 import speedTestRoutes from "./routes/speedTest.ts";
+import exercismRoutes from "./routes/exercism.ts";
 import { saveRunHistory, getRunHistory, getRunStats } from "./routes/runHistory.ts";
 import { LLMManagementHandler } from "./routes/llmManagement.ts";
 import { DbService } from "./services/dbService.ts";
@@ -146,7 +147,7 @@ app.use(async (ctx, next) => {
 
       const data = await response.json();
       const models = data.data || [];
-      
+
       // Sort by popularity/context length and get top 10
       const topModels = models
         .filter((model: any) => model.id && !model.id.includes('free') && !model.id.includes('nitro'))
@@ -158,7 +159,7 @@ app.use(async (ctx, next) => {
           return a.id.localeCompare(b.id);
         })
         .slice(0, 10);
-      
+
       ctx.response.body = {
         success: true,
         models: topModels
@@ -176,14 +177,14 @@ app.use(async (ctx, next) => {
     try {
       const name = path.split("/")[4];
       let apiKey: string | undefined;
-      
+
       if (method === "GET") {
         apiKey = ctx.request.url.searchParams.get("apiKey") || undefined;
       } else {
         const body = await ctx.request.body({ type: "json" }).value;
         apiKey = body.apiKey;
       }
-      
+
       const result = await LLMManagementHandler.fetchProviderModels(name, apiKey);
       ctx.response.body = result;
       return;
@@ -272,7 +273,11 @@ app.use(openRouterRoutes.allowedMethods());
 app.use(speedTestRoutes.routes());
 app.use(speedTestRoutes.allowedMethods());
 
+app.use(exercismRoutes.routes());
+app.use(exercismRoutes.allowedMethods());
+
+
 // Start the server
-const port = parseInt(Deno.env.get("PORT") || "8000");
+const port = parseInt(Deno.env.get("PORT") || "6100");
 console.log(`Server running on http://localhost:${port}`);
 await app.listen({ port });

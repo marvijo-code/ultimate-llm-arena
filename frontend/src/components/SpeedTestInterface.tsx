@@ -391,7 +391,7 @@ export function SpeedTestInterface({ onShowDashboard }: SpeedTestInterfaceProps)
           <div className="flex-shrink-0 border-b bg-muted/30">
             <div className="p-4">
               {/* Model Selection - Horizontal */}
-              <div className="relative">
+              <div className="relative rounded-xl border bg-card/50 p-3 shadow-sm">
                 {/* Usage Guidance - Always visible */}
                 <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 z-10">
                   <div className="bg-primary text-primary-foreground px-3 py-1 rounded-lg text-sm font-medium animate-bounce">
@@ -422,12 +422,12 @@ export function SpeedTestInterface({ onShowDashboard }: SpeedTestInterfaceProps)
                     return (
                       <button
                         key={model}
-                        className={`flex-shrink-0 px-4 py-3 rounded-xl border text-sm transition-all duration-200 transform hover:scale-105 ${
-                          isSelected 
-                            ? 'bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/25' 
+                        className={`flex-shrink-0 px-4 py-3 rounded-lg border text-sm transition-all duration-200 ${
+                          isSelected
+                            ? 'bg-primary text-primary-foreground border-primary shadow-md shadow-primary/20'
                             : isDisabled
-                            ? 'opacity-50 cursor-not-allowed border-muted-foreground/20'
-                            : 'hover:bg-muted border-muted-foreground/30 hover:border-primary/50 hover:shadow-md'
+                            ? 'opacity-50 cursor-not-allowed bg-muted/30 border-border/50'
+                            : 'bg-card hover:bg-muted/40 border-border hover:shadow-sm'
                         }`}
                         onClick={() => !isDisabled && toggleModelSelection(model)}
                       >
@@ -451,7 +451,7 @@ export function SpeedTestInterface({ onShowDashboard }: SpeedTestInterfaceProps)
           {/* Results Area - Full Height */}
           <div className="flex-1 min-h-0 overflow-hidden">
             {(isRunning || streamingResults.length > 0) ? (
-              <div className="h-full min-h-0 grid grid-cols-1 lg:grid-cols-3 gap-1">
+              <div className="h-full min-h-0 grid grid-cols-1 lg:grid-cols-3 gap-4">
                 {selectedModels.slice(0, 3).map((model) => {
                   const streamResult = streamingResults.find(r => r.model === model);
                   const [provider, modelName] = model.split('/');
@@ -459,14 +459,14 @@ export function SpeedTestInterface({ onShowDashboard }: SpeedTestInterfaceProps)
                   const hasError = streamResult?.error;
                   
                   return (
-                    <div 
+                    <div
                       key={model}
-                      className={`h-full min-h-0 flex flex-col border-r last:border-r-0 transition-all ${
+                      className={`h-full min-h-0 flex flex-col rounded-lg border shadow-sm overflow-hidden transition-all ${
                         isComplete && !hasError
                           ? 'bg-green-50/50 dark:bg-green-950/10'
                           : hasError
                           ? 'bg-red-50/50 dark:bg-red-950/10'
-                          : 'bg-background'
+                          : 'bg-card'
                       }`}
                     >
                       {/* Model Header */}
@@ -628,7 +628,7 @@ export function SpeedTestInterface({ onShowDashboard }: SpeedTestInterfaceProps)
           <div className="flex-shrink-0 border-t bg-muted/30">
             <div className="p-4 space-y-4">
               {/* Prompt Input with Preset Selection */}
-              <div className="space-y-4">
+              <div className="space-y-4 rounded-xl border bg-card p-4 shadow-sm">
                 <div className="flex items-center space-x-2">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>

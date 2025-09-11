@@ -29,17 +29,41 @@ export interface Provider {
   created_at?: string;
 }
 
+
+  // Code evaluation types
+  export interface CodeEvalResult {
+    model: string;
+    code: string;
+    lintWarnings: number;
+    lintErrors: number;
+    compileError?: string;
+    testsPassed: number;
+    testsTotal: number;
+    score: number;
+    error?: string;
+  }
+
+  export interface CodeEvalRun {
+    id: number;
+    exerciseId: string;
+    exerciseName: string;
+    testCount: number;
+    models: string[];
+    results: CodeEvalResult[];
+    created_at: string;
+  }
+
 export class DbService {
   // API Key operations
   static getApiKeys(provider?: string): ApiKey[] {
     let query = "SELECT * FROM api_keys";
     const params: any[] = [];
-    
+
     if (provider) {
       query += " WHERE provider = ?";
       params.push(provider);
     }
-    
+
     const results = db.query(query, params);
     return results.map((row: any) => ({
       id: row.id,
@@ -54,7 +78,7 @@ export class DbService {
   static getApiKey(keyName: string, provider: string): ApiKey | undefined {
     const result = db.query("SELECT * FROM api_keys WHERE key_name = ? AND provider = ?", [keyName, provider]);
     if (result.length === 0) return undefined;
-    
+
     const row = result[0] as any;
     return {
       id: row.id,
@@ -77,14 +101,14 @@ export class DbService {
   static updateApiKey(id: number, apiKey: Partial<ApiKey>): void {
     const fields: string[] = [];
     const params: any[] = [];
-    
+
     if (apiKey.key_value !== undefined) {
       fields.push("key_value = ?");
       params.push(apiKey.key_value);
     }
-    
+
     if (fields.length === 0) return;
-    
+
     params.push(id);
     const sql = `UPDATE api_keys SET ${fields.join(", ")}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`;
     db.execute(sql, params);
@@ -132,7 +156,7 @@ export class DbService {
   static getProvider(name: string): Provider | undefined {
     const result = db.query("SELECT * FROM providers WHERE name = ?", [name]);
     if (result.length === 0) return undefined;
-    
+
     const row = result[0] as any;
     return {
       id: row.id,
@@ -183,5 +207,14 @@ export class DbService {
 
   static deleteLLMModel(id: number): boolean {
     return db.deleteLLMModel(id);
+  }
+
+  // Code evaluation runs
+  static saveCodeEvalRun(run: Omit<CodeEvalRun, "id" | "created_at">): number {
+    return db.saveCodeEvalRun(run as any);
+  }
+
+  static getCodeEvalRuns(limit = 50): CodeEvalRun[] {
+    return db.getCodeEvalRuns(limit) as any;
   }
 }
