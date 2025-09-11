@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from '@/components/ui/dropdown-menu'
 import { useToast } from '@/hooks/use-toast'
@@ -25,7 +26,9 @@ import {
   Database,
   Globe,
   Smartphone,
-  BarChart3
+  BarChart3,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { apiService } from '@/services/api';
 import type { SpeedTestComparison, StreamingEvent, LLMModel, OpenRouterModel } from '@/services/api';
@@ -124,6 +127,7 @@ export function SpeedTestInterface({ onShowDashboard }: SpeedTestInterfaceProps)
   const [apiKey, setApiKey] = useState('');
   const [showApiKeyInput, setShowApiKeyInput] = useState(false);
   const [, setApiKeyStatus] = useState(false);
+  const [showPrompt, setShowPrompt] = useState(true);
 
   useEffect(() => {
     // Set random prompt on load
@@ -209,7 +213,7 @@ export function SpeedTestInterface({ onShowDashboard }: SpeedTestInterfaceProps)
 
   const handleSaveApiKey = async () => {
     if (!apiKey.trim()) return;
-    
+
     try {
       const response = await apiService.saveApiKey(apiKey);
       if (response.success) {
@@ -235,10 +239,10 @@ export function SpeedTestInterface({ onShowDashboard }: SpeedTestInterfaceProps)
 
   const handleRunTest = async () => {
     if (!prompt.trim() || selectedModels.length === 0) return;
-    
+
     setIsRunning(true);
     setResults(null);
-    
+
     // Initialize streaming results
     const initialResults: StreamingResult[] = selectedModels.map(model => ({
       model,
@@ -247,7 +251,7 @@ export function SpeedTestInterface({ onShowDashboard }: SpeedTestInterfaceProps)
       isStreaming: false
     }));
     setStreamingResults(initialResults);
-    
+
     try {
       await apiService.runStreamingSpeedTest({
         prompt: prompt.trim(),
@@ -256,11 +260,11 @@ export function SpeedTestInterface({ onShowDashboard }: SpeedTestInterfaceProps)
         setStreamingResults(prev => {
           const updated = [...prev];
           const modelIndex = updated.findIndex(r => r.model === event.model);
-          
+
           if (modelIndex === -1) return prev;
-          
+
           const current = updated[modelIndex];
-          
+
           switch (event.type) {
             case 'start':
               updated[modelIndex] = {
@@ -270,7 +274,7 @@ export function SpeedTestInterface({ onShowDashboard }: SpeedTestInterfaceProps)
                 reasoningContent: ''
               };
               break;
-              
+
             case 'chunk':
               if (event.content) {
                 updated[modelIndex] = {
@@ -285,7 +289,7 @@ export function SpeedTestInterface({ onShowDashboard }: SpeedTestInterfaceProps)
                 };
               }
               break;
-              
+
             case 'metrics':
               updated[modelIndex] = {
                 ...current,
@@ -295,7 +299,7 @@ export function SpeedTestInterface({ onShowDashboard }: SpeedTestInterfaceProps)
                 tokens: event.totalTokens
               };
               break;
-              
+
             case 'complete':
               updated[modelIndex] = {
                 ...current,
@@ -303,7 +307,7 @@ export function SpeedTestInterface({ onShowDashboard }: SpeedTestInterfaceProps)
                 isStreaming: false
               };
               break;
-              
+
             case 'error':
               updated[modelIndex] = {
                 ...current,
@@ -313,7 +317,7 @@ export function SpeedTestInterface({ onShowDashboard }: SpeedTestInterfaceProps)
               };
               break;
           }
-          
+
           return updated;
         });
       });
@@ -323,13 +327,13 @@ export function SpeedTestInterface({ onShowDashboard }: SpeedTestInterfaceProps)
       toast({
         variant: "destructive",
         title: "Speed Test Error",
-        description: errorMessage.includes('500') 
+        description: errorMessage.includes('500')
           ? "Server error. Please check your API key configuration."
           : errorMessage
       });
     } finally {
       setIsRunning(false);
-      
+
       // Save run history after completion
       if (streamingResults.length > 0) {
         try {
@@ -345,7 +349,7 @@ export function SpeedTestInterface({ onShowDashboard }: SpeedTestInterfaceProps)
             firstTokenTime: result.firstTokenTime,
             error: result.error
           }));
-          
+
           await apiService.saveRunHistory(prompt.trim(), selectedModels, historyResults);
         } catch (error) {
           console.error('Failed to save run history:', error);
@@ -361,7 +365,7 @@ export function SpeedTestInterface({ onShowDashboard }: SpeedTestInterfaceProps)
         return prev.filter(id => id !== modelId);
       } else {
         if (prev.length >= 3) {
-          return prev; // Limit to 3 models
+          return [...prev.slice(1), modelId];
         }
         return [...prev, modelId];
       }
@@ -396,8 +400,8 @@ export function SpeedTestInterface({ onShowDashboard }: SpeedTestInterfaceProps)
                   className="font-mono text-sm"
                 />
               </div>
-              <Button 
-                onClick={handleSaveApiKey} 
+              <Button
+                onClick={handleSaveApiKey}
                 disabled={!apiKey.trim()}
                 className="w-full"
               >
@@ -426,7 +430,7 @@ export function SpeedTestInterface({ onShowDashboard }: SpeedTestInterfaceProps)
                     <ArrowDown className="h-4 w-4 text-primary animate-bounce" style={{ animationDelay: '0.1s' }} />
                   </div>
                 </div>
-                
+
                 <div className="flex items-center space-x-2 pb-2">
                   <Input
                     id="llm-model-search"
@@ -437,9 +441,21 @@ export function SpeedTestInterface({ onShowDashboard }: SpeedTestInterfaceProps)
                   />
                 </div>
 
-                <div className="flex items-center space-x-2 overflow-x-auto pb-2">
+                <ScrollArea className="pb-2">
+                  <div className="w-max inline-flex items-center gap-2 pr-6">
                   {popularModels
                     .filter((m) => m.toLowerCase().includes(modelSearch.toLowerCase()))
+                    .slice()
+                    .sort((a, b) => {
+                      const aStr = a.toLowerCase();
+                      const bStr = b.toLowerCase();
+                      const words = ['nano', 'flash', 'preview', '7b'];
+                      const aHit = words.some((w) => aStr.includes(w));
+                      const bHit = words.some((w) => bStr.includes(w));
+                      if (aHit && !bHit) return 1;
+                      if (bHit && !aHit) return -1;
+                      return 0;
+                    })
                     .map((model) => {
                       const isSelected = selectedModels.includes(model);
                       // Handle format: openrouter/provider/model or provider/model
@@ -454,22 +470,18 @@ export function SpeedTestInterface({ onShowDashboard }: SpeedTestInterfaceProps)
                         provider = parts[0];
                         modelName = parts[1] || parts[0];
                       }
-                      const isDisabled = selectedModels.length >= 3 && !isSelected;
-
                       return (
                         <button
                           key={model}
                           id={`llm-model-chip-${model.replace(/[^a-z0-9-]/gi, '_')}`}
                           data-model={model}
                           aria-pressed={isSelected}
-                          className={`flex-shrink-0 px-4 py-3 rounded-lg border text-sm transition-all duration-200 ${
+                          className={`flex-shrink-0 px-2.5 py-1.5 rounded-md border text-xs transition-all duration-200 ${
                             isSelected
                               ? 'bg-primary text-primary-foreground border-primary shadow-md shadow-primary/20 llm-model-chip llm-model-chip--selected'
-                              : isDisabled
-                              ? 'opacity-50 cursor-not-allowed bg-muted/30 border-border/50 llm-model-chip'
                               : 'bg-card hover:bg-muted/40 border-border hover:shadow-sm llm-model-chip'
                           }`}
-                          onClick={() => !isDisabled && toggleModelSelection(model)}
+                          onClick={() => toggleModelSelection(model)}
                         >
                           <div className="text-center">
                             <div className="font-semibold">{modelName}</div>
@@ -483,7 +495,8 @@ export function SpeedTestInterface({ onShowDashboard }: SpeedTestInterfaceProps)
                         </button>
                       );
                     })}
-                </div>
+                  </div>
+                </ScrollArea>
               </div>
             </div>
           </div>
@@ -497,7 +510,7 @@ export function SpeedTestInterface({ onShowDashboard }: SpeedTestInterfaceProps)
                   const [provider, modelName] = model.split('/');
                   const isComplete = streamResult?.isComplete || false;
                   const hasError = streamResult?.error;
-                  
+
                   return (
                     <div
                       key={model}
@@ -560,7 +573,7 @@ export function SpeedTestInterface({ onShowDashboard }: SpeedTestInterfaceProps)
                             </Alert>
                           </div>
                         ) : (
-                          <div className="flex-1 min-h-0 overflow-y-auto p-4 text-sm leading-relaxed space-y-3 scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent llm-result-card-content">
+                          <div className="flex-1 min-h-0 overflow-y-auto p-4 text-sm leading-relaxed space-y-3 llm-result-card-content">
                             {streamResult?.reasoningContent && (
                               <div className="p-3 bg-blue-50/50 dark:bg-blue-950/20 rounded-md border-l-2 border-blue-400">
                                 <div className="flex items-center space-x-2 mb-2">
@@ -575,7 +588,7 @@ export function SpeedTestInterface({ onShowDashboard }: SpeedTestInterfaceProps)
                                 </div>
                               </div>
                             )}
-                            
+
                             {streamResult?.content ? (
                               <div>
                                 {streamResult.reasoningContent && (
@@ -615,7 +628,7 @@ export function SpeedTestInterface({ onShowDashboard }: SpeedTestInterfaceProps)
                             )}
                           </div>
                         )}
-                        
+
                         {/* Footer Stats - Always Visible and Fixed */}
                         <div className="flex-shrink-0 border-t p-2 bg-muted/20 llm-result-card-footer">
                           <div className="flex items-center justify-between text-xs text-muted-foreground">
@@ -671,7 +684,7 @@ export function SpeedTestInterface({ onShowDashboard }: SpeedTestInterfaceProps)
             <div className="p-4 space-y-4">
               {/* Prompt Input with Preset Selection */}
               <div className="space-y-4 rounded-xl border bg-card p-4 shadow-sm llm-prompt-container">
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center gap-2">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="outline" className="w-64 justify-between">
@@ -687,8 +700,8 @@ export function SpeedTestInterface({ onShowDashboard }: SpeedTestInterfaceProps)
                             {category}
                           </DropdownMenuLabel>
                           {prompts.map((promptText, index) => (
-                            <DropdownMenuItem 
-                              key={`${category}-${index}`} 
+                            <DropdownMenuItem
+                              key={`${category}-${index}`}
                               onClick={() => setPrompt(promptText)}
                               className="pl-8"
                             >
@@ -724,17 +737,34 @@ export function SpeedTestInterface({ onShowDashboard }: SpeedTestInterfaceProps)
                       Dashboard
                     </Button>
                   )}
+                  <div className="ml-auto">
+                    <Button
+                      id="llm-prompt-toggle"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowPrompt((p) => !p)}
+                      className="llm-prompt-toggle"
+                    >
+                      {showPrompt ? (
+                        <><EyeOff className="mr-1 h-3 w-3" /> Hide prompt</>
+                      ) : (
+                        <><Eye className="mr-1 h-3 w-3" /> Show prompt</>
+                      )}
+                    </Button>
+                  </div>
                 </div>
-                
+
                 <div className="flex items-center space-x-4">
-                  <Textarea
-                    id="llm-prompt-textarea"
-                    placeholder="Enter your test prompt or select one from the dropdown above..."
-                    value={prompt}
-                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setPrompt(e.target.value)}
-                    className="flex-1 min-h-[80px] resize-none text-sm llm-prompt-textarea"
-                    maxLength={2000}
-                  />
+                  {showPrompt && (
+                    <Textarea
+                      id="llm-prompt-textarea"
+                      placeholder="Enter your test prompt or select one from the dropdown above..."
+                      value={prompt}
+                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setPrompt(e.target.value)}
+                      className="flex-1 min-h-[60px] max-h-[320px] resize-y text-sm llm-prompt-textarea"
+                      maxLength={2000}
+                    />
+                  )}
                   <div className="flex flex-col items-center space-y-2">
                     <Button
                       id="llm-run-button"

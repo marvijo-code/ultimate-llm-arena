@@ -170,6 +170,17 @@ export default function ExercismArena({ onBack }: Props) {
               <div className="mt-2 flex items-center gap-2 overflow-x-auto py-1">
                 {popularModels
                   .filter((m) => m.toLowerCase().includes(modelSearch.toLowerCase()))
+                  .slice()
+                  .sort((a, b) => {
+                    const aStr = a.toLowerCase();
+                    const bStr = b.toLowerCase();
+                    const words = ['nano', 'flash', 'preview', '7b'];
+                    const aHit = words.some((w) => aStr.includes(w));
+                    const bHit = words.some((w) => bStr.includes(w));
+                    if (aHit && !bHit) return 1;
+                    if (bHit && !aHit) return -1;
+                    return 0;
+                  })
                   .map(model => {
                     const selected = selectedModels.includes(model);
                     const parts = model.split('/');
@@ -183,7 +194,7 @@ export default function ExercismArena({ onBack }: Props) {
                         data-model={model}
                         aria-pressed={selected}
                         onClick={() => !isDisabled && toggleModelSelection(model)}
-                        className={`px-3 py-2 text-sm rounded-md border ${selected ? 'bg-primary text-primary-foreground border-primary exercism-model-chip exercism-model-chip--selected' : isDisabled ? 'opacity-50 cursor-not-allowed exercism-model-chip' : 'exercism-model-chip'}`}
+                        className={`px-2 py-1 text-xs rounded border ${selected ? 'bg-primary text-primary-foreground border-primary exercism-model-chip exercism-model-chip--selected' : isDisabled ? 'opacity-50 cursor-not-allowed exercism-model-chip' : 'exercism-model-chip'}`}
                       >
                         <div className="flex items-center gap-2">
                           <span className="font-medium">{modelName}</span>

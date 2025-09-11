@@ -44,12 +44,32 @@ Write-Host "🔧 Starting Deno backend on port 6100..." -ForegroundColor Blue
 Start-Job -Name "Backend" -ScriptBlock {
     Set-Location $using:PWD\backend
     $env:PORT = "6100"
-    deno run --allow-net --allow-env --allow-read --watch main.ts *> ..\logs\backend.log
+    deno task dev *> ..\logs\backend.log
 } | Out-Null
 
 # Wait for backend to start
 Write-Host "⏳ Waiting for backend to start..." -ForegroundColor Yellow
 Start-Sleep -Seconds 3
+
+# Ensure frontend port 6001 is free before starting
+Write-Host "🧹 Ensuring port 6001 is free..." -ForegroundColor Yellow
+try {
+    $conns = Get-NetTCPConnection -LocalPort 6001 -State Listen -ErrorAction SilentlyContinue
+    if ($conns) {
+        $pids = $conns | Select-Object -ExpandProperty OwningProcess -Unique
+        foreach ($procId in $pids) {
+            try {
+                Stop-Process -Id $procId -Force -ErrorAction Stop
+                Write-Host ("Killed PID {0} on port 6001" -f $procId) -ForegroundColor DarkYellow
+            } catch {
+                Write-Host ("Failed to kill PID {0}: {1}" -f $procId, $_.Exception.Message) -ForegroundColor Red
+            }
+        }
+        Start-Sleep -Milliseconds 300
+    }
+} catch {
+    Write-Host "Could not check/kill processes on 6001: $($_.Exception.Message)" -ForegroundColor Red
+}
 
 # Start frontend
 Write-Host "⚡ Starting Vite frontend on port 6001..." -ForegroundColor Blue
