@@ -36,30 +36,65 @@ export interface RunResponse {
 
 // Import test cases for isogram
 import { ISOGRAM_CASES } from "../exercism/isogram/cases.ts";
+// Additional exercises
+import { PANGRAM_CASES } from "../exercism/pangram/cases.ts";
+import { RAINDROPS_CASES } from "../exercism/raindrops/cases.ts";
+import { LEAP_CASES } from "../exercism/leap/cases.ts";
+import { ACRONYM_CASES } from "../exercism/acronym/cases.ts";
+
 
 export class ExercismService {
   static listExercises(): Exercise[] {
     return [
       { id: "isogram", name: "Isogram", language: "javascript", totalTests: ISOGRAM_CASES.length },
+      { id: "pangram", name: "Pangram", language: "javascript", totalTests: PANGRAM_CASES.length },
+      { id: "raindrops", name: "Raindrops", language: "javascript", totalTests: RAINDROPS_CASES.length },
+      { id: "leap", name: "Leap", language: "javascript", totalTests: LEAP_CASES.length },
+      { id: "acronym", name: "Acronym", language: "javascript", totalTests: ACRONYM_CASES.length },
     ];
   }
 
   static buildPrompt(exerciseId: string): string {
-    if (exerciseId !== "isogram") throw new Error("Unsupported exercise");
-    return (
+    const common = (
       "You are participating in a coding evaluation. Implement the required function exactly as specified. " +
       "Do not include any unit tests. Return only the solution code.\n\n" +
-      "Task: Implement a function isIsogram(s: string): boolean that returns true if the string is an isogram.\n" +
-      "An isogram is a word or phrase without a repeating letter (case-insensitive).\n" +
-      "Ignore spaces and hyphens. Treat accented characters as distinct runes (no normalization).\n\n" +
       "Constraints:\n" +
       "- Export the function as a default export from a single file module.\n" +
       "- Use only standard JavaScript/TypeScript.\n" +
-      "- Do not include any test code, printing, or explanations.\n\n" +
-      "Signature to implement (TypeScript is fine but JS also accepted):\n" +
-      "export default function isIsogram(s: string): boolean { /* ... */ }\n\n" +
-      "Output ONLY the full code in one code block."
+      "- Do not include any test code, printing, or explanations.\n\n"
     );
+    switch (exerciseId) {
+      case "isogram":
+        return common +
+          "Task: Implement a function isIsogram(s: string): boolean that returns true if the string is an isogram.\n" +
+          "An isogram is a word or phrase without a repeating letter (case-insensitive).\n" +
+          "Ignore spaces and hyphens. Treat accented characters as distinct runes (no normalization).\n\n" +
+          "Signature to implement (TypeScript is fine but JS also accepted):\n" +
+          "export default function isIsogram(s: string): boolean { /* ... */ }\n\n" +
+          "Output ONLY the full code in one code block.";
+      case "pangram":
+        return common +
+          "Task: Implement a function isPangram(s: string): boolean that returns true iff the input contains every letter a-z at least once (case-insensitive).\n" +
+          "Ignore numbers, punctuation, and symbols.\n\n" +
+          "Signature:\nexport default function isPangram(s: string): boolean { /* ... */ }\n";
+      case "raindrops":
+        return common +
+          "Task: Implement a function raindrops(n: number): string.\n" +
+          "If n has 3 as a factor, add \"Pling\" to the result.\nIf n has 5 as a factor, add \"Plang\".\nIf n has 7 as a factor, add \"Plong\".\nIf n does not have any of 3,5,7 as a factor, return the digits of n as a string.\n\n" +
+          "Signature:\nexport default function raindrops(n: number): string { /* ... */ }\n";
+      case "leap":
+        return common +
+          "Task: Implement a function isLeap(year: number): boolean using Gregorian rules.\n" +
+          "Years divisible by 4 are leap years, except for years divisible by 100, unless they are also divisible by 400.\n\n" +
+          "Signature:\nexport default function isLeap(year: number): boolean { /* ... */ }\n";
+      case "acronym":
+        return common +
+          "Task: Implement a function acronym(phrase: string): string that returns the upper-cased acronym built from the first letter of each word.\n" +
+          "Words are split on spaces, hyphens, and punctuation; keep letters and ignore non-letters.\n\n" +
+          "Signature:\nexport default function acronym(phrase: string): string { /* ... */ }\n";
+      default:
+        throw new Error("Unsupported exercise");
+    }
   }
 
   private static async generateSolutionCode(model: string, prompt: string): Promise<string> {
@@ -141,6 +176,58 @@ export class ExercismService {
     }
     return { passed, total };
   }
+  private static async runPangramTests(modulePath: string, testCount: number): Promise<{ passed: number; total: number }> {
+    const { default: isPangram } = await import(`file://${modulePath}?t=${Date.now()}`) as { default: (s: string) => boolean };
+    const total = Math.min(testCount, PANGRAM_CASES.length);
+    let passed = 0;
+    for (let i = 0; i < total; i++) {
+      const c = PANGRAM_CASES[i];
+      let ok = false;
+      try { ok = isPangram(c.input) === c.expected; } catch { ok = false; }
+      if (ok) passed++;
+    }
+    return { passed, total };
+  }
+
+  private static async runRaindropsTests(modulePath: string, testCount: number): Promise<{ passed: number; total: number }> {
+    const { default: raindrops } = await import(`file://${modulePath}?t=${Date.now()}`) as { default: (n: number) => string };
+    const total = Math.min(testCount, RAINDROPS_CASES.length);
+    let passed = 0;
+    for (let i = 0; i < total; i++) {
+      const c = RAINDROPS_CASES[i];
+      let ok = false;
+      try { ok = raindrops(c.input) === c.expected; } catch { ok = false; }
+      if (ok) passed++;
+    }
+    return { passed, total };
+  }
+
+  private static async runLeapTests(modulePath: string, testCount: number): Promise<{ passed: number; total: number }> {
+    const { default: isLeap } = await import(`file://${modulePath}?t=${Date.now()}`) as { default: (y: number) => boolean };
+    const total = Math.min(testCount, LEAP_CASES.length);
+    let passed = 0;
+    for (let i = 0; i < total; i++) {
+      const c = LEAP_CASES[i];
+      let ok = false;
+      try { ok = isLeap(c.input) === c.expected; } catch { ok = false; }
+      if (ok) passed++;
+    }
+    return { passed, total };
+  }
+
+  private static async runAcronymTests(modulePath: string, testCount: number): Promise<{ passed: number; total: number }> {
+    const { default: acronym } = await import(`file://${modulePath}?t=${Date.now()}`) as { default: (s: string) => string };
+    const total = Math.min(testCount, ACRONYM_CASES.length);
+    let passed = 0;
+    for (let i = 0; i < total; i++) {
+      const c = ACRONYM_CASES[i];
+      let ok = false;
+      try { ok = acronym(c.input) === c.expected; } catch { ok = false; }
+      if (ok) passed++;
+    }
+    return { passed, total };
+  }
+
 
   private static scoreFromMetrics(testsPassed: number, testsTotal: number, lintWarnings: number, lintErrors: number, compileError?: string): number {
     if (compileError) return 0;
@@ -169,7 +256,21 @@ export class ExercismService {
         const compileError = await this.tryCompile(modulePath);
         let testsPassed = 0, testsTotal = testCount;
         if (!compileError) {
-          const res = await this.runIsogramTests(modulePath, testCount);
+          let res: { passed: number; total: number };
+          switch (exercise.id) {
+            case "isogram":
+              res = await this.runIsogramTests(modulePath, testCount); break;
+            case "pangram":
+              res = await this.runPangramTests(modulePath, testCount); break;
+            case "raindrops":
+              res = await this.runRaindropsTests(modulePath, testCount); break;
+            case "leap":
+              res = await this.runLeapTests(modulePath, testCount); break;
+            case "acronym":
+              res = await this.runAcronymTests(modulePath, testCount); break;
+            default:
+              throw new Error("Unsupported exercise");
+          }
           testsPassed = res.passed;
           testsTotal = res.total;
         }
@@ -202,13 +303,23 @@ export class ExercismService {
     const compileError = await this.tryCompile(modulePath);
     let testsPassed = 0, testsTotal = Math.min(testCount, exercise.totalTests);
     if (!compileError) {
-      if (exerciseId === "isogram") {
-        const res = await this.runIsogramTests(modulePath, testsTotal);
-        testsPassed = res.passed;
-        testsTotal = res.total;
-      } else {
-        throw new Error("Unsupported exercise");
+      let res: { passed: number; total: number };
+      switch (exerciseId) {
+        case "isogram":
+          res = await this.runIsogramTests(modulePath, testsTotal); break;
+        case "pangram":
+          res = await this.runPangramTests(modulePath, testsTotal); break;
+        case "raindrops":
+          res = await this.runRaindropsTests(modulePath, testsTotal); break;
+        case "leap":
+          res = await this.runLeapTests(modulePath, testsTotal); break;
+        case "acronym":
+          res = await this.runAcronymTests(modulePath, testsTotal); break;
+        default:
+          throw new Error("Unsupported exercise");
       }
+      testsPassed = res.passed;
+      testsTotal = res.total;
     }
     const score = this.scoreFromMetrics(testsPassed, testsTotal, lintWarnings, lintErrors, compileError);
     return { model: "local-test", code, lintWarnings, lintErrors, compileError, testsPassed, testsTotal, score };

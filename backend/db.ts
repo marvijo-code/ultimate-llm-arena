@@ -623,7 +623,7 @@ class InMemoryDB {
   }
 }
 
-const db = new InMemoryDB();
+import sqliteDb from "./sqliteDb.ts";
 
-export default db;
+export default sqliteDb;
 export type { RunHistory, RunStats, LLMProvider, LLMModel };

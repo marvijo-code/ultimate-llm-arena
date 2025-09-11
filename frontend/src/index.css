@@ -27,7 +27,7 @@
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
+    --card: 222.2 84% 8%;
     --card-foreground: 210 40% 98%;
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
@@ -54,5 +54,87 @@
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
+  }
+}
+
+
+@layer components {
+  /* Model chips (SpeedTestInterface & ExercismArena) */
+  .llm-model-chip {
+    transition: box-shadow 150ms ease, transform 150ms ease;
+  }
+  .llm-model-chip:hover {
+    box-shadow: 0 2px 8px hsl(var(--foreground) / 0.08);
+    transform: translateY(-1px);
+  }
+  .llm-model-chip--selected {
+    outline: 2px solid hsl(var(--primary));
+    outline-offset: 1px;
+  }
+  .llm-model-chip:focus-visible {
+    box-shadow: 0 0 0 3px hsl(var(--primary) / 0.3);
+  }
+  /* Specific highlight for a popular model */
+  #llm-model-chip-meituan_longcat-flash-chat {
+    border-color: hsl(var(--ring));
+    background-image: linear-gradient(
+      to bottom right,
+      hsl(var(--card)) 0%,
+      hsl(var(--card) / 0.9) 100%
+    );
+  }
+
+  /* Green checkbox badge */
+  .llm-model-checkbox,
+  .exercism-model-checkbox {
+    box-shadow: 0 1px 4px rgba(16, 185, 129, 0.35); /* emerald shadow */
+  }
+
+  /* Results cards */
+  .llm-result-card,
+  .exercism-result-card,
+  .provider-model-card,
+  .saved-model-card {
+    transition: box-shadow 150ms ease, transform 150ms ease, border-color 150ms ease;
+  }
+  .llm-result-card:hover,
+  .exercism-result-card:hover,
+  .provider-model-card:hover,
+  .saved-model-card:hover {
+    box-shadow: 0 6px 20px hsl(var(--foreground) / 0.10);
+    transform: translateY(-1px);
+  }
+  .llm-result-card-header {
+    background-color: hsl(var(--muted) / 0.35);
+  }
+  .llm-result-card-footer {
+    background-color: hsl(var(--muted) / 0.25);
+  }
+
+  /* Prompt area */
+  .llm-prompt-textarea {
+    background-color: #f3f4f6 !important; /* light gray instead of white */
+    color: #0f172a !important;          /* slate-900 for readability */
+    border: 1px solid hsl(var(--border));
+  }
+  .llm-prompt-textarea::placeholder {
+    color: #6b7280; /* gray-500 */
+  }
+
+  /* Panels and containers */
+  .llm-selection-container,
+  .llm-prompt-container,
+  .provider-models-browser {
+    border-color: hsl(var(--border));
+    backdrop-filter: saturate(1.1);
+  }
+
+  /* Buttons */
+  .llm-run-button {
+    text-transform: none;
+  }
+  .saved-model-delete:hover {
+    border-color: hsl(var(--destructive));
+    color: hsl(var(--destructive));
   }
 }

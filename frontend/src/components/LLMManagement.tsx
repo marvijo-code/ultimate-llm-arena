@@ -222,7 +222,7 @@ const LLMManagement: React.FC = () => {
     : [];
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div id="llm-management" className="container mx-auto p-6 space-y-6 llm-management">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">LLM Management</h1>
@@ -246,12 +246,13 @@ const LLMManagement: React.FC = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <Select value={selectedProvider?.name || ''} onValueChange={handleProviderChange}>
-                  <SelectTrigger>
+                  {/* logical id/class via trigger */}
+                  <SelectTrigger id="llm-provider-select" className="llm-provider-select">
                     <SelectValue placeholder="Select a provider..." />
                   </SelectTrigger>
                   <SelectContent>
                     {providers.map((provider) => (
-                      <SelectItem key={provider.name} value={provider.name}>
+                      <SelectItem key={provider.name} value={provider.name} id={`llm-provider-item-${provider.name}`} className="llm-provider-item" data-provider={provider.name}>
                         <div className="flex items-center gap-2">
                           <span>{provider.display_name}</span>
                           {provider.api_key_required && (
@@ -282,10 +283,12 @@ const LLMManagement: React.FC = () => {
                             onChange={(e) => setApiKey(e.target.value)}
                             className="flex-1"
                           />
-                          <Button 
+                          <Button
+                            id="provider-load-models-button"
                             onClick={() => loadProviderModels(selectedProvider)}
                             disabled={loading || !apiKey.trim()}
                             size="sm"
+                            className="provider-load-models-button"
                           >
                             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Load"}
                           </Button>
@@ -294,10 +297,11 @@ const LLMManagement: React.FC = () => {
                     )}
 
                     {!selectedProvider.api_key_required && (
-                      <Button 
+                      <Button
+                        id="provider-load-models-button"
                         onClick={() => loadProviderModels(selectedProvider)}
                         disabled={loading}
-                        className="w-full"
+                        className="w-full provider-load-models-button"
                       >
                         {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : "Load Models"}
                       </Button>
@@ -308,7 +312,7 @@ const LLMManagement: React.FC = () => {
             </Card>
 
             {/* Models Browser Column */}
-            <Card className="lg:min-h-[600px]">
+            <Card id="provider-models-browser" className="lg:min-h-[600px] provider-models-browser">
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <span>Available Models</span>
@@ -357,10 +361,11 @@ const LLMManagement: React.FC = () => {
                       <div className="flex items-center space-x-2">
                         <Search className="w-4 h-4 text-muted-foreground" />
                         <Input
+                          id="provider-models-search"
                           placeholder="Search models..."
                           value={modelSearchTerm}
                           onChange={(e) => setModelSearchTerm(e.target.value)}
-                          className="flex-1"
+                          className="flex-1 provider-models-search"
                         />
                       </div>
                     </div>
@@ -368,7 +373,7 @@ const LLMManagement: React.FC = () => {
                     {/* Models Grid */}
                     <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2">
                       {filteredProviderModels.map((model) => (
-                        <Card key={model.id} className="p-4 hover:shadow-md transition-shadow">
+                        <Card key={model.id} id={`provider-model-card-${model.id}`} data-model-id={model.id} className="p-4 hover:shadow-md transition-shadow provider-model-card">
                           <div className="flex items-start justify-between gap-4">
                             <div className="flex-1 min-w-0">
                               <h4 className="font-medium truncate">{model.display_name || model.name || model.id}</h4>
@@ -388,10 +393,11 @@ const LLMManagement: React.FC = () => {
                                 )}
                               </div>
                             </div>
-                            <Button 
-                              size="sm" 
+                            <Button
+                              id={`add-model-button-${model.id}`}
+                              size="sm"
                               onClick={() => addModelToDatabase(model)}
-                              className="shrink-0"
+                              className="shrink-0 add-model-button"
                             >
                               <Plus className="w-4 h-4 mr-1" />
                               Add
@@ -420,11 +426,11 @@ const LLMManagement: React.FC = () => {
                     No models saved yet. Browse providers to add models.
                   </p>
                 ) : (
-                  <div className="grid gap-4">
+                  <div id="saved-models-grid" className="grid gap-4 saved-models-grid">
                     {models.map((model) => {
                       const provider = providers.find(p => p.id === model.provider_id);
                       return (
-                        <Card key={model.id} className="p-4">
+                        <Card key={model.id} id={`saved-model-card-${model.id}`} data-model-id={model.id} className="p-4 saved-model-card">
                           <div className="flex items-center justify-between">
                             <div className="flex-1">
                               <div className="flex items-center gap-2">
@@ -457,12 +463,16 @@ const LLMManagement: React.FC = () => {
                             </div>
                             <div className="flex items-center gap-2 ml-4">
                               <Switch
+                                id={`saved-model-toggle-${model.id}`}
+                                className="saved-model-toggle"
                                 checked={model.is_active}
                                 onCheckedChange={() => toggleModelActive(model)}
                               />
                               <Button
+                                id={`saved-model-delete-${model.id}`}
                                 size="sm"
                                 variant="outline"
+                                className="saved-model-delete"
                                 onClick={() => deleteModel(model)}
                               >
                                 <Trash2 className="w-4 h-4" />

@@ -3,7 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Play, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Loader2, Play, CheckCircle2, AlertCircle, Check } from 'lucide-react';
 import { apiService, type Exercise, type CodeEvalResult, type LLMModel, type OpenRouterModel } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
 
@@ -15,6 +15,7 @@ export default function ExercismArena({ onBack }: Props) {
   const [selectedExercise, setSelectedExercise] = useState<string>('isogram');
   const [testCount, setTestCount] = useState<number>(10);
   const [popularModels, setPopularModels] = useState<string[]>([]);
+  const [modelSearch, setModelSearch] = useState('');
   const [selectedModels, setSelectedModels] = useState<string[]>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [results, setResults] = useState<Record<string, CodeEvalResult | { error: string }>>({});
@@ -33,6 +34,21 @@ export default function ExercismArena({ onBack }: Props) {
   }, []);
 
   const loadPopularModels = async () => {
+    try {
+      // Try full model list via API key if configured
+      const allResp: any = await apiService.getAvailableModels();
+      const allData = (allResp as any).data ?? allResp;
+      if (Array.isArray(allData)) {
+        const modelIds = allData
+          .map((m: any) => (typeof m === 'string' ? m : (m.id || m.model || m.name)))
+          .filter((id: any) => typeof id === 'string') as string[];
+        if (modelIds.length > 0) {
+          setPopularModels(modelIds);
+          setSelectedModels(modelIds.slice(0, 3));
+          return;
+        }
+      }
+    } catch {}
     try {
       const response = await apiService.getTopModels();
       if (response.success && response.models) {
@@ -109,7 +125,7 @@ export default function ExercismArena({ onBack }: Props) {
         )}
       </div>
 
-      <Card>
+      <Card id="exercism-setup-card" className="exercism-setup-card">
         <CardHeader>
           <CardTitle>Setup</CardTitle>
           <CardDescription>Select exercise, number of tests, and up to 3 models</CardDescription>
@@ -119,7 +135,8 @@ export default function ExercismArena({ onBack }: Props) {
             <div>
               <label className="text-sm font-medium">Exercise</label>
               <select
-                className="mt-2 w-full border rounded-md bg-background p-2"
+                id="exercism-exercise-select"
+                className="mt-2 w-full border rounded-md bg-background p-2 exercism-exercise-select"
                 value={selectedExercise}
                 onChange={(e) => setSelectedExercise(e.target.value)}
               >
@@ -131,42 +148,56 @@ export default function ExercismArena({ onBack }: Props) {
                 )}
               </select>
               <div className="text-xs text-muted-foreground mt-1">
-                Total tests available: {exercises.find(e => e.id === selectedExercise)?.totalTests ?? 15}
+                Total tests available: {exercises.find(e => e.id === selectedExercise)?.totalTests ?? 'N/A'}
               </div>
             </div>
             <div>
               <label className="text-sm font-medium">Number of tests</label>
-              <Input type="number" min={1} max={50} value={testCount} onChange={(e) => setTestCount(parseInt(e.target.value || '10', 10))} className="mt-2" />
+              <Input id="exercism-test-count-input" type="number" min={1} max={50} value={testCount} onChange={(e) => setTestCount(parseInt(e.target.value || '10', 10))} className="mt-2" />
               <div className="text-xs text-muted-foreground mt-1">Default 10</div>
             </div>
             <div>
               <label className="text-sm font-medium">Models</label>
+              <div className="mt-2 flex items-center gap-2">
+                <Input
+                  id="exercism-model-search"
+                  placeholder="Search models (provider/model)..."
+                  value={modelSearch}
+                  onChange={(e) => setModelSearch(e.target.value)}
+                  className="w-72 exercism-model-search"
+                />
+              </div>
               <div className="mt-2 flex items-center gap-2 overflow-x-auto py-1">
-                {popularModels.slice(0, 8).map(model => {
-                  const selected = selectedModels.includes(model);
-                  const parts = model.split('/');
-                  const provider = parts.length === 3 ? parts[1] : parts[0];
-                  const modelName = parts.length === 3 ? parts[2] : parts[1] || parts[0];
-                  const isDisabled = selectedModels.length >= 3 && !selected;
-                  return (
-                    <button
-                      key={model}
-                      onClick={() => !isDisabled && toggleModelSelection(model)}
-                      className={`px-3 py-2 text-sm rounded-md border ${selected ? 'bg-primary text-primary-foreground border-primary' : isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{modelName}</span>
-                        <Badge variant="outline">{provider}</Badge>
-                      </div>
-                    </button>
-                  );
-                })}
+                {popularModels
+                  .filter((m) => m.toLowerCase().includes(modelSearch.toLowerCase()))
+                  .map(model => {
+                    const selected = selectedModels.includes(model);
+                    const parts = model.split('/');
+                    const provider = parts.length === 3 ? parts[1] : parts[0];
+                    const modelName = parts.length === 3 ? parts[2] : parts[1] || parts[0];
+                    const isDisabled = selectedModels.length >= 3 && !selected;
+                    return (
+                      <button
+                        key={model}
+                        id={`exercism-model-chip-${model.replace(/[^a-z0-9-]/gi, '_')}`}
+                        data-model={model}
+                        aria-pressed={selected}
+                        onClick={() => !isDisabled && toggleModelSelection(model)}
+                        className={`px-3 py-2 text-sm rounded-md border ${selected ? 'bg-primary text-primary-foreground border-primary exercism-model-chip exercism-model-chip--selected' : isDisabled ? 'opacity-50 cursor-not-allowed exercism-model-chip' : 'exercism-model-chip'}`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{modelName}</span>
+                          <Badge variant="outline">{provider}</Badge>{selected && (<span className="inline-flex items-center justify-center h-4 w-4 rounded-sm bg-green-500 border border-green-600 text-white exercism-model-checkbox"><Check className="h-3 w-3" /></span>)}
+                        </div>
+                      </button>
+                    );
+                  })}
               </div>
               <div className="text-xs text-muted-foreground mt-1">{selectedModels.length}/3 selected</div>
             </div>
           </div>
           <div>
-            <Button onClick={handleRun} disabled={isRunning || selectedModels.length === 0}>
+            <Button id="exercism-run-button" onClick={handleRun} disabled={isRunning || selectedModels.length === 0}>
               {isRunning ? <><Loader2 className="mr-2 h-4 w-4 animate-spin"/>Running...</> : <><Play className="mr-2 h-4 w-4"/>Run Tests</>}
             </Button>
           </div>
@@ -174,12 +205,12 @@ export default function ExercismArena({ onBack }: Props) {
       </Card>
 
       {selectedModels.length > 0 && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div id="exercism-results-grid" className="grid grid-cols-1 lg:grid-cols-3 gap-4 exercism-results-grid">
           {selectedModels.map(model => {
             const r = results[model] as CodeEvalResult | undefined;
             const hasError = (r as any)?.error || r?.compileError;
             return (
-              <Card key={model} className={hasError ? 'border-red-500/40' : ''}>
+              <Card key={model} id={`exercism-result-card-${model.replace(/[^a-z0-9-]/gi, '_')}`} data-model={model} className={`border-white exercism-result-card ${hasError ? 'border-red-500/40' : ''}`}>
                 <CardHeader>
                   <CardTitle className="text-base">{model}</CardTitle>
                 </CardHeader>

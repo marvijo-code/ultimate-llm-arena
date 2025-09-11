@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -7,13 +7,14 @@ import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from '@/components/ui/dropdown-menu'
 import { useToast } from '@/hooks/use-toast'
-import { 
-  Loader2, 
-  Zap, 
-  Clock, 
-  Cpu, 
-  Settings, 
-  Play, 
+import {
+  Loader2,
+  Zap,
+  Clock,
+  Cpu,
+  Settings,
+  Play,
+  Check,
   CheckCircle2,
   AlertCircle,
   Sparkles,
@@ -29,9 +30,6 @@ import {
 import { apiService } from '@/services/api';
 import type { SpeedTestComparison, StreamingEvent, LLMModel, OpenRouterModel } from '@/services/api';
 
-interface ApiKeyStatusResponse {
-  hasApiKey: boolean;
-}
 
 // Programming prompt categories with comprehensive examples
 const PROGRAMMING_PROMPTS = {
@@ -120,6 +118,7 @@ export function SpeedTestInterface({ onShowDashboard }: SpeedTestInterfaceProps)
   const [selectedModels, setSelectedModels] = useState<string[]>([]);
   const [streamingResults, setStreamingResults] = useState<StreamingResult[]>([]);
   const [popularModels, setPopularModels] = useState<string[]>([]);
+  const [modelSearch, setModelSearch] = useState('');
   const [isRunning, setIsRunning] = useState(false);
   const [, setResults] = useState<SpeedTestComparison | null>(null);
   const [apiKey, setApiKey] = useState('');
@@ -136,7 +135,33 @@ export function SpeedTestInterface({ onShowDashboard }: SpeedTestInterfaceProps)
     setApiKeyStatus(true);
   }, []);
 
-  const loadPopularModels = async () => {
+  const loadPopularModels = useCallback(async () => {
+    try {
+      // Try full model list via API key if configured
+      const resp = await apiService.getAvailableModels() as unknown;
+      const maybeObj = resp as Record<string, unknown>;
+      const allData = (maybeObj && typeof maybeObj === 'object' && 'data' in maybeObj ? (maybeObj.data as unknown) : resp);
+      if (Array.isArray(allData)) {
+        const modelIds = (allData as unknown[])
+          .map((m: unknown) => {
+            if (typeof m === 'string') return m;
+            if (m && typeof m === 'object') {
+              const obj = m as { id?: unknown; model?: unknown; name?: unknown };
+              const id = (typeof obj.id === 'string' ? obj.id : (typeof obj.model === 'string' ? obj.model : (typeof obj.name === 'string' ? obj.name : undefined)));
+              return id;
+            }
+            return undefined;
+          })
+          .filter((id): id is string => typeof id === 'string');
+        if (modelIds.length > 0) {
+          setPopularModels(modelIds);
+          setSelectedModels(modelIds.slice(0, 3)); // Select first 3 by default
+          return;
+        }
+      }
+    } catch {
+      // ignore; fall through to public fallbacks
+    }
     try {
       // Load top 10 models from OpenRouter without API key
       const response = await apiService.getTopModels();
@@ -146,21 +171,21 @@ export function SpeedTestInterface({ onShowDashboard }: SpeedTestInterfaceProps)
         setSelectedModels(models.slice(0, 3)); // Select first 3 by default
         return;
       }
-      
+
       // Fallback to saved models from LLM Management
       const savedResponse = await apiService.getSavedModels();
       if (savedResponse.success && savedResponse.data?.models) {
         const savedModels = savedResponse.data.models
           .filter((model: LLMModel) => model.is_active)
           .map((model: LLMModel) => `${model.provider_name}/${model.model_name}`);
-        
+
         if (savedModels.length > 0) {
           setPopularModels(savedModels);
           setSelectedModels(savedModels.slice(0, 3)); // Select first 3 by default
           return;
         }
       }
-      
+
       // Final fallback to popular models endpoint
       const popularResponse = await apiService.getPopularModels();
       if (popularResponse.success && popularResponse.data) {
@@ -176,11 +201,11 @@ export function SpeedTestInterface({ onShowDashboard }: SpeedTestInterfaceProps)
         description: "Could not fetch available models from OpenRouter."
       });
     }
-  };
+  }, [toast]);
 
   useEffect(() => {
     loadPopularModels();
-  }, []);
+  }, [loadPopularModels]);
 
   const handleSaveApiKey = async () => {
     if (!apiKey.trim()) return;
@@ -388,10 +413,10 @@ export function SpeedTestInterface({ onShowDashboard }: SpeedTestInterfaceProps)
       {!showApiKeyInput && (
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Top Model Selection Panel */}
-          <div className="flex-shrink-0 border-b bg-muted/30">
+          <div id="llm-selection-panel" className="flex-shrink-0 border-b bg-muted/30 llm-selection-panel">
             <div className="p-4">
               {/* Model Selection - Horizontal */}
-              <div className="relative rounded-xl border bg-card/50 p-3 shadow-sm">
+              <div id="llm-selection-container" className="relative rounded-xl border bg-card/50 p-3 shadow-sm llm-selection-container">
                 {/* Usage Guidance - Always visible */}
                 <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 z-10">
                   <div className="bg-primary text-primary-foreground px-3 py-1 rounded-lg text-sm font-medium animate-bounce">
@@ -402,47 +427,62 @@ export function SpeedTestInterface({ onShowDashboard }: SpeedTestInterfaceProps)
                   </div>
                 </div>
                 
+                <div className="flex items-center space-x-2 pb-2">
+                  <Input
+                    id="llm-model-search"
+                    placeholder="Search models (provider/model)..."
+                    value={modelSearch}
+                    onChange={(e) => setModelSearch(e.target.value)}
+                    className="w-72 llm-model-search"
+                  />
+                </div>
+
                 <div className="flex items-center space-x-2 overflow-x-auto pb-2">
-                  {popularModels.slice(0, 8).map((model) => {
-                    const isSelected = selectedModels.includes(model);
-                    // Handle format: openrouter/provider/model or provider/model
-                    const parts = model.split('/');
-                    let provider, modelName;
-                    if (parts.length === 3) {
-                      // Format: openrouter/provider/model - skip the router part
-                      provider = parts[1];
-                      modelName = parts[2];
-                    } else {
-                      // Format: provider/model
-                      provider = parts[0];
-                      modelName = parts[1] || parts[0];
-                    }
-                    const isDisabled = selectedModels.length >= 3 && !isSelected;
-                    
-                    return (
-                      <button
-                        key={model}
-                        className={`flex-shrink-0 px-4 py-3 rounded-lg border text-sm transition-all duration-200 ${
-                          isSelected
-                            ? 'bg-primary text-primary-foreground border-primary shadow-md shadow-primary/20'
-                            : isDisabled
-                            ? 'opacity-50 cursor-not-allowed bg-muted/30 border-border/50'
-                            : 'bg-card hover:bg-muted/40 border-border hover:shadow-sm'
-                        }`}
-                        onClick={() => !isDisabled && toggleModelSelection(model)}
-                      >
-                        <div className="text-center">
-                          <div className="font-semibold">{modelName}</div>
-                          <div className="text-xs opacity-70 mt-1">{provider}</div>
-                          {isSelected && (
-                            <div className="mt-1">
-                              <CheckCircle2 className="h-3 w-3 mx-auto" />
-                            </div>
-                          )}
-                        </div>
-                      </button>
-                    );
-                  })}
+                  {popularModels
+                    .filter((m) => m.toLowerCase().includes(modelSearch.toLowerCase()))
+                    .map((model) => {
+                      const isSelected = selectedModels.includes(model);
+                      // Handle format: openrouter/provider/model or provider/model
+                      const parts = model.split('/');
+                      let provider, modelName;
+                      if (parts.length === 3) {
+                        // Format: openrouter/provider/model - skip the router part
+                        provider = parts[1];
+                        modelName = parts[2];
+                      } else {
+                        // Format: provider/model
+                        provider = parts[0];
+                        modelName = parts[1] || parts[0];
+                      }
+                      const isDisabled = selectedModels.length >= 3 && !isSelected;
+
+                      return (
+                        <button
+                          key={model}
+                          id={`llm-model-chip-${model.replace(/[^a-z0-9-]/gi, '_')}`}
+                          data-model={model}
+                          aria-pressed={isSelected}
+                          className={`flex-shrink-0 px-4 py-3 rounded-lg border text-sm transition-all duration-200 ${
+                            isSelected
+                              ? 'bg-primary text-primary-foreground border-primary shadow-md shadow-primary/20 llm-model-chip llm-model-chip--selected'
+                              : isDisabled
+                              ? 'opacity-50 cursor-not-allowed bg-muted/30 border-border/50 llm-model-chip'
+                              : 'bg-card hover:bg-muted/40 border-border hover:shadow-sm llm-model-chip'
+                          }`}
+                          onClick={() => !isDisabled && toggleModelSelection(model)}
+                        >
+                          <div className="text-center">
+                            <div className="font-semibold">{modelName}</div>
+                            <div className="text-xs opacity-70 mt-1">{provider}</div>
+                            {isSelected && (
+                              <div className="mt-1">
+                                <span className="inline-flex items-center justify-center mx-auto h-4 w-4 rounded-sm bg-green-500 border border-green-600 text-white llm-model-checkbox"><Check className="h-3 w-3" /></span>
+                              </div>
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
                 </div>
               </div>
             </div>
@@ -451,7 +491,7 @@ export function SpeedTestInterface({ onShowDashboard }: SpeedTestInterfaceProps)
           {/* Results Area - Full Height */}
           <div className="flex-1 min-h-0 overflow-hidden">
             {(isRunning || streamingResults.length > 0) ? (
-              <div className="h-full min-h-0 grid grid-cols-1 lg:grid-cols-3 gap-4">
+              <div id="llm-results-grid" className="h-full min-h-0 grid grid-cols-1 lg:grid-cols-3 gap-4 llm-results-grid">
                 {selectedModels.slice(0, 3).map((model) => {
                   const streamResult = streamingResults.find(r => r.model === model);
                   const [provider, modelName] = model.split('/');
@@ -461,7 +501,9 @@ export function SpeedTestInterface({ onShowDashboard }: SpeedTestInterfaceProps)
                   return (
                     <div
                       key={model}
-                      className={`h-full min-h-0 flex flex-col rounded-lg border shadow-sm overflow-hidden transition-all ${
+                      id={`llm-result-card-${model.replace(/[^a-z0-9-]/gi, '_')}`}
+                      data-model={model}
+                      className={`h-full min-h-0 flex flex-col rounded-lg border border-white shadow-sm overflow-hidden transition-all llm-result-card ${
                         isComplete && !hasError
                           ? 'bg-green-50/50 dark:bg-green-950/10'
                           : hasError
@@ -470,7 +512,7 @@ export function SpeedTestInterface({ onShowDashboard }: SpeedTestInterfaceProps)
                       }`}
                     >
                       {/* Model Header */}
-                      <div className="flex-shrink-0 p-3 border-b bg-muted/30">
+                      <div className="flex-shrink-0 p-3 border-b bg-muted/30 llm-result-card-header">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-2">
                             <span className="font-medium text-sm">{modelName}</span>
@@ -518,7 +560,7 @@ export function SpeedTestInterface({ onShowDashboard }: SpeedTestInterfaceProps)
                             </Alert>
                           </div>
                         ) : (
-                          <div className="flex-1 min-h-0 overflow-y-auto p-4 text-sm leading-relaxed space-y-3 scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
+                          <div className="flex-1 min-h-0 overflow-y-auto p-4 text-sm leading-relaxed space-y-3 scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent llm-result-card-content">
                             {streamResult?.reasoningContent && (
                               <div className="p-3 bg-blue-50/50 dark:bg-blue-950/20 rounded-md border-l-2 border-blue-400">
                                 <div className="flex items-center space-x-2 mb-2">
@@ -575,7 +617,7 @@ export function SpeedTestInterface({ onShowDashboard }: SpeedTestInterfaceProps)
                         )}
                         
                         {/* Footer Stats - Always Visible and Fixed */}
-                        <div className="flex-shrink-0 border-t p-2 bg-muted/20">
+                        <div className="flex-shrink-0 border-t p-2 bg-muted/20 llm-result-card-footer">
                           <div className="flex items-center justify-between text-xs text-muted-foreground">
                             <div className="space-y-1">
                               {streamResult?.tokens ? (
@@ -625,10 +667,10 @@ export function SpeedTestInterface({ onShowDashboard }: SpeedTestInterfaceProps)
           </div>
 
           {/* Bottom Prompt Panel */}
-          <div className="flex-shrink-0 border-t bg-muted/30">
+          <div id="llm-prompt-panel" className="flex-shrink-0 border-t bg-muted/30 llm-prompt-panel">
             <div className="p-4 space-y-4">
               {/* Prompt Input with Preset Selection */}
-              <div className="space-y-4 rounded-xl border bg-card p-4 shadow-sm">
+              <div className="space-y-4 rounded-xl border bg-card p-4 shadow-sm llm-prompt-container">
                 <div className="flex items-center space-x-2">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -673,6 +715,7 @@ export function SpeedTestInterface({ onShowDashboard }: SpeedTestInterfaceProps)
                   </Button>
                   {onShowDashboard && (
                     <Button
+                      id="llm-dashboard-button"
                       variant="outline"
                       size="sm"
                       onClick={onShowDashboard}
@@ -685,18 +728,20 @@ export function SpeedTestInterface({ onShowDashboard }: SpeedTestInterfaceProps)
                 
                 <div className="flex items-center space-x-4">
                   <Textarea
+                    id="llm-prompt-textarea"
                     placeholder="Enter your test prompt or select one from the dropdown above..."
                     value={prompt}
                     onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setPrompt(e.target.value)}
-                    className="flex-1 min-h-[80px] resize-none text-sm"
+                    className="flex-1 min-h-[80px] resize-none text-sm llm-prompt-textarea"
                     maxLength={2000}
                   />
                   <div className="flex flex-col items-center space-y-2">
                     <Button
+                      id="llm-run-button"
                       onClick={handleRunTest}
                       disabled={!prompt.trim() || selectedModels.length === 0 || isRunning}
                       size="lg"
-                      className="w-36 h-12 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 font-semibold"
+                      className="w-36 h-12 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 font-semibold llm-run-button"
                     >
                       {isRunning ? (
                         <>
