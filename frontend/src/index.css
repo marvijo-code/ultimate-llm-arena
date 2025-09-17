@@ -167,6 +167,18 @@
     background-color: hsl(var(--muted) / 0.45) !important;
   }
 
+  /* LLM Provider Select: ensure solid backgrounds */
+  .llm-provider-select {
+    background-color: hsl(var(--card)) !important;
+    color: hsl(var(--card-foreground)) !important;
+    border-color: hsl(var(--border)) !important;
+  }
+  .llm-provider-select-content {
+    background-color: hsl(var(--card)) !important;
+    color: hsl(var(--card-foreground)) !important;
+    border-color: hsl(var(--border)) !important;
+  }
+
 
 
 /* Bright, always-visible, taller scrollbars (global) */

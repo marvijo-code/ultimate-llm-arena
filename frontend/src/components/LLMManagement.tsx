@@ -250,7 +250,7 @@ const LLMManagement: React.FC = () => {
                   <SelectTrigger id="llm-provider-select" className="llm-provider-select">
                     <SelectValue placeholder="Select a provider..." />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-card text-card-foreground border border-border shadow-lg llm-provider-select-content">
                     {providers.map((provider) => (
                       <SelectItem key={provider.name} value={provider.name} id={`llm-provider-item-${provider.name}`} className="llm-provider-item" data-provider={provider.name}>
                         <div className="flex items-center gap-2">

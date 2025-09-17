@@ -441,7 +441,7 @@ export function SpeedTestInterface({ onShowDashboard }: SpeedTestInterfaceProps)
                   />
                 </div>
 
-                <ScrollArea className="pb-2">
+                <ScrollArea id="llm-models-scrollarea" className="pb-6 llm-models-scrollarea">
                   <div className="w-max inline-flex items-center gap-2 pr-6">
                   {popularModels
                     .filter((m) => m.toLowerCase().includes(modelSearch.toLowerCase()))
@@ -476,10 +476,10 @@ export function SpeedTestInterface({ onShowDashboard }: SpeedTestInterfaceProps)
                           id={`llm-model-chip-${model.replace(/[^a-z0-9-]/gi, '_')}`}
                           data-model={model}
                           aria-pressed={isSelected}
-                          className={`flex-shrink-0 px-2.5 py-1.5 rounded-md border text-xs transition-all duration-200 ${
+                          className={`flex-shrink-0 px-2.5 py-1.5 rounded-md border-2 text-xs transition-all duration-200 ${
                             isSelected
-                              ? 'bg-primary text-primary-foreground border-primary shadow-md shadow-primary/20 llm-model-chip llm-model-chip--selected'
-                              : 'bg-card hover:bg-muted/40 border-border hover:shadow-sm llm-model-chip'
+                              ? 'bg-primary text-primary-foreground border-white shadow-md shadow-primary/20 llm-model-chip llm-model-chip--selected'
+                              : 'bg-card hover:bg-muted/40 border-white hover:shadow-sm llm-model-chip'
                           }`}
                           onClick={() => toggleModelSelection(model)}
                         >
