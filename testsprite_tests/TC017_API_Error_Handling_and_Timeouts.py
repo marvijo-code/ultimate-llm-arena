@@ -45,20 +45,25 @@ async def run_test():
                 pass
         
         # Interact with the page elements to simulate user flow
-        # Click on 'Exercism' button to proceed with Exercism challenge error simulation
+        # Simulate API failure or timeout when fetching models
         frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/header/div/div[2]/button').nth(0)
+        elem = frame.locator('xpath=html/body/div/div/header/div/div[2]/button[2]').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # Click on 'Run Tests' button to simulate Exercism challenge run failure
+        # Simulate API failure or timeout when fetching models by selecting a provider from dropdown
         frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/div/ol').nth(0)
+        elem = frame.locator('xpath=html/body/div/div/main/div/div[2]/div[2]/div/div/div[2]/button').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # Generic failing assertion since expected result is unknown
-        assert False, 'Test plan execution failed: generic failure assertion'
+        # Navigate to speed test page or feature to simulate API failure during speed test execution
+        frame = context.pages[-1]
+        elem = frame.locator('xpath=html/body/div[2]/div').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        assert False, 'Generic failure assertion as expected result is unknown'
         await asyncio.sleep(5)
     
     finally:

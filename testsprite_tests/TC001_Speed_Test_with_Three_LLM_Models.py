@@ -45,13 +45,13 @@ async def run_test():
                 pass
         
         # Interact with the page elements to simulate user flow
-        # Investigate model selection dropdown or try to reload models to select three different LLM models.
+        # Try to select three different LLM models from the dropdown
         frame = context.pages[-1]
         elem = frame.locator('xpath=html/body/div/div/main/div/div/div/div/div/div[2]/input').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        assert False, 'Test plan execution failed: generic failure assertion.'
+        assert False, 'Test plan execution failed: generic failure assertion'
         await asyncio.sleep(5)
     
     finally:

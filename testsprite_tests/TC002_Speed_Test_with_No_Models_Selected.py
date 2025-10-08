@@ -45,25 +45,28 @@ async def run_test():
                 pass
         
         # Interact with the page elements to simulate user flow
-        # Attempt to run the speed test without selecting any models to verify validation and error handling.
+        # Click the 'Run Test' button to attempt running the speed test without selecting any LLM models and observe the error message.
         frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div').nth(0)
+        elem = frame.locator('xpath=html/body/div/div/div/ol/li').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # Click the 'Run Test' button to attempt running the speed test without selecting any models and observe error handling.
+        # Check if the 'Run Test' button is present and clickable or if there is any other element to trigger the speed test run without model selection.
         frame = context.pages[-1]
         elem = frame.locator('xpath=html/body/div/div/main/div/div/div[3]/div/div/div[2]/textarea').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # Check the page for any error messages or validation feedback indicating that at least one model must be selected before running the test.
-        await page.mouse.wheel(0, window.innerHeight)
+        # Confirm that the 'Run Test' button is disabled and no error message is shown when no models are selected, then complete the task.
+        frame = context.pages[-1]
+        elem = frame.locator('xpath=html/body/div/div/main/div/div/div[3]/div/div/div[2]/textarea').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # Assert that an error message is displayed indicating that at least one model must be selected before running the test.
-        error_message_locator = frame.locator('text=Please select at least one model to run the speed test')
-        await expect(error_message_locator).to_be_visible(timeout=5000)
+        # Assert that an error message is displayed when attempting to run the speed test without selecting any LLM models
+        frame = context.pages[-1]
+        error_locator = frame.locator('text=at least one model must be selected')
+        assert await error_locator.is_visible(), "Error message for no model selection is not visible"
         await asyncio.sleep(5)
     
     finally:

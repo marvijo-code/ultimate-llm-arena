@@ -94,7 +94,14 @@ export default function ExercismArena({ onBack }: Props) {
   };
 
   const handleRun = async () => {
-    if (!selectedExercise || selectedModels.length === 0) return;
+    if (!selectedExercise) {
+      toast({ variant: 'destructive', title: 'No exercise selected', description: 'Please select an exercise to run.' });
+      return;
+    }
+    if (selectedModels.length === 0) {
+      toast({ variant: 'destructive', title: 'No models selected', description: 'Please select at least one model to run the challenge.' });
+      return;
+    }
     setIsRunning(true);
     setResults({});
     try {

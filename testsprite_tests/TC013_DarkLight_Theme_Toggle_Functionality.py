@@ -45,37 +45,41 @@ async def run_test():
                 pass
         
         # Interact with the page elements to simulate user flow
-        # Click the 'Toggle theme' button to switch the UI theme
+        # Click the 'Toggle theme' button to switch theme and verify UI changes visually
         frame = context.pages[-1]
         elem = frame.locator('xpath=html/body/div/div/header/div/div[2]/button[3]').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # Refresh the page to verify if the theme preference persists
+        # Click the 'Toggle theme' button again to switch back to dark theme and verify UI components
+        frame = context.pages[-1]
+        elem = frame.locator('xpath=html/body/div/div/header/div/div[2]/button[3]').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        # Refresh the page to check if the selected theme preference is preserved
         await page.goto('http://localhost:6001/', timeout=10000)
         
 
-        # Assert the theme toggle button exists
-        assert await elem.is_visible(), "Theme toggle button should be visible"
-        # Check the theme attribute or class to verify the theme switched to dark mode
-        theme_class = await frame.locator('html').get_attribute('class')
-        assert 'dark' in theme_class or 'dark-theme' in theme_class, "Theme should switch to dark mode"
-        # Check readability by verifying text color contrast or visibility of key UI elements
-        header_text_color = await frame.locator('header').evaluate("el => window.getComputedStyle(el).color")
-        assert header_text_color is not None and header_text_color != '', "Header text color should be set for readability"
-        # Toggle back to light theme
-        await elem.click(timeout=5000)
-        await page.wait_for_timeout(1000)
-        theme_class_light = await frame.locator('html').get_attribute('class')
-        assert 'light' in theme_class_light or 'light-theme' in theme_class_light, "Theme should switch back to light mode"
-        # Check readability again in light mode
-        header_text_color_light = await frame.locator('header').evaluate("el => window.getComputedStyle(el).color")
-        assert header_text_color_light is not None and header_text_color_light != '', "Header text color should be set for readability in light mode"
-        # Refresh the page to confirm theme preference persists
-        await page.goto('http://localhost:6001/', timeout=10000)
-        await page.wait_for_timeout(2000)
-        theme_class_after_refresh = await frame.locator('html').get_attribute('class')
-        assert theme_class_after_refresh == theme_class_light, "Theme preference should persist after page refresh"
+        # Assert the theme has switched to light mode by checking a known element's background or class
+        light_theme_class = 'light-theme'  # Example class name for light theme
+        assert await frame.locator('body').get_attribute('class') == light_theme_class, 'Theme did not switch to light mode as expected'
+          
+        # Assert UI components readability: check text color contrast or visibility of key elements
+        assert await frame.locator('header').is_visible(), 'Header is not visible in light theme'
+        assert await frame.locator('div.features').is_visible(), 'Features section is not visible in light theme'
+          
+        # Toggle back to dark theme and assert the theme class changes accordingly
+        dark_theme_class = 'dark-theme'  # Example class name for dark theme
+        assert await frame.locator('body').get_attribute('class') == dark_theme_class, 'Theme did not switch back to dark mode as expected'
+          
+        # Assert UI components readability in dark theme
+        assert await frame.locator('header').is_visible(), 'Header is not visible in dark theme'
+        assert await frame.locator('div.features').is_visible(), 'Features section is not visible in dark theme'
+          
+        # Refresh the page and check if the theme preference persists
+        await page.reload()
+        assert await frame.locator('body').get_attribute('class') == dark_theme_class, 'Theme preference did not persist after page reload'
         await asyncio.sleep(5)
     
     finally:

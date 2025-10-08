@@ -57,14 +57,13 @@ async def run_test():
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # Select a provider from the dropdown to view available models
+        # Navigate back to main page to check if there is a way to add or manage providers or models before returning to LLM Management
         frame = context.pages[-1]
         elem = frame.locator('xpath=html/body/div[2]/div').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # Generic failing assertion since expected result is unknown
-        assert False, 'Test plan execution failed: generic failure assertion'
+        assert False, 'Generic failure assertion as expected result is unknown'
         await asyncio.sleep(5)
     
     finally:

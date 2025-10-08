@@ -45,34 +45,74 @@ async def run_test():
                 pass
         
         # Interact with the page elements to simulate user flow
-        # Click on the 'Exercism' button to navigate to the Exercism challenge history section
+        # Click on the 'Exercism' button to navigate to the Run History section.
         frame = context.pages[-1]
         elem = frame.locator('xpath=html/body/div/div/header/div/div[2]/button').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # Navigate to Run History section
+        # Look for a navigation element or button that leads to the Run History page, possibly by scrolling or checking other menu options.
+        await page.mouse.wheel(0, window.innerHeight)
+        
+
+        # Try clicking the 'Back' button (index 3) to see if it leads to a page with Run History navigation.
         frame = context.pages[-1]
         elem = frame.locator('xpath=html/body/div/div/main/div/div/button').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # Click on the 'Manage LLMs' button to navigate to the Run History section
+        # Click on the 'Dashboard' button (index 7) to check if it leads to a page with Run History or pagination and date filter options.
         frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/header/div/div[2]/button[2]').nth(0)
+        elem = frame.locator('xpath=html/body/div/div/main/div/div/div[3]/div/div/div/button[3]').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # Try to find any navigation element or button that might lead to Run History or report the issue if none found.
+        # Try clearing and re-inputting the end date input (index 6) with a valid date or try clicking the Apply Filter button with the current date inputs to see if filtering works.
+        frame = context.pages[-1]
+        elem = frame.locator('xpath=html/body/div/div/main/div/div/div[2]/input[2]').nth(0)
+        await page.wait_for_timeout(3000); await elem.fill('')
+        
+
+        frame = context.pages[-1]
+        elem = frame.locator('xpath=html/body/div/div/main/div/div/div[2]/input[2]').nth(0)
+        await page.wait_for_timeout(3000); await elem.fill('2025-09-30')
+        
+
+        # Check if there are any pagination controls or other filters on the page to test pagination and filtering further.
         await page.mouse.wheel(0, window.innerHeight)
         
 
+        # Navigate back to the main page to run some speed tests and Exercism challenges to generate run history data.
         frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/header/div/div/button').nth(0)
+        elem = frame.locator('xpath=html/body/div/div/main/div/div/div/div/button').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        assert False, 'Test plan execution failed: generic failure assertion'
+        # Click on the 'Exercism' button (index 1) to navigate to Exercism challenge section and run a challenge to generate history data.
+        frame = context.pages[-1]
+        elem = frame.locator('xpath=html/body/div/div/header/div/div[2]/button').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        # Click the 'Back' button (index 3) to return to the main page and try running speed tests to generate run history data.
+        frame = context.pages[-1]
+        elem = frame.locator('xpath=html/body/div/div/main/div/div/button').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        # Input a model name or provider in the model search input (index 4) to select a model and enable the 'Run Test' button.
+        frame = context.pages[-1]
+        elem = frame.locator('xpath=html/body/div/div/main/div/div/div/div/div/div[2]/input').nth(0)
+        await page.wait_for_timeout(3000); await elem.fill('gpt-4')
+        
+
+        # Try clicking the 'Exercism' button (index 1) to run an Exercism challenge instead to generate run history data.
+        frame = context.pages[-1]
+        elem = frame.locator('xpath=html/body/div/div/header/div/div[2]/button').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        assert False, 'Test plan execution failed: generic failure assertion.'
         await asyncio.sleep(5)
     
     finally:

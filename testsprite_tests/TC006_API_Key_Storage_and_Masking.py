@@ -45,25 +45,13 @@ async def run_test():
                 pass
         
         # Interact with the page elements to simulate user flow
-        # Click on 'Manage LLMs' to navigate to API Key Management interface
+        # Click on 'Manage LLMs' button to navigate to API Key Management interface
         frame = context.pages[-1]
         elem = frame.locator('xpath=html/body/div/div/header/div/div[2]/button[2]').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # Find and click on the UI element to navigate to API Key Management interface
-        await page.mouse.wheel(0, window.innerHeight)
-        
-
-        await page.mouse.wheel(0, window.innerHeight)
-        
-
-        await page.mouse.wheel(0, window.innerHeight)
-        
-
-        await page.mouse.wheel(0, window.innerHeight)
-        
-
+        # Look for a navigation element or button to access API Key Management interface
         await page.mouse.wheel(0, window.innerHeight)
         
 

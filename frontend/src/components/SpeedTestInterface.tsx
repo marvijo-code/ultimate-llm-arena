@@ -238,7 +238,14 @@ export function SpeedTestInterface({ onShowDashboard }: SpeedTestInterfaceProps)
   };
 
   const handleRunTest = async () => {
-    if (!prompt.trim() || selectedModels.length === 0) return;
+    if (!prompt.trim()) {
+      toast({ variant: 'destructive', title: 'No prompt entered', description: 'Please enter a prompt to run the speed test.' });
+      return;
+    }
+    if (selectedModels.length === 0) {
+      toast({ variant: 'destructive', title: 'No models selected', description: 'Please select at least one model to run the speed test.' });
+      return;
+    }
 
     setIsRunning(true);
     setResults(null);

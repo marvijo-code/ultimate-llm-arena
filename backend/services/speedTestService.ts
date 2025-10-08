@@ -123,19 +123,22 @@ export class SpeedTestService {
     // Get the API key from the database
     const apiKeyRecord = DbService.getApiKey("OPENROUTER_API_KEY", "OpenRouter");
     
-    if (!apiKeyRecord) {
-      throw new Error("OpenRouter API key not found. Please configure your API key in the settings.");
-    }
-
-    if (!apiKeyRecord.key_value || 
+    if (!apiKeyRecord || !apiKeyRecord.key_value || 
         apiKeyRecord.key_value === "your_openrouter_api_key_here" || 
         apiKeyRecord.key_value.trim() === "" ||
         (!apiKeyRecord.key_value.startsWith("sk-or-") && !apiKeyRecord.key_value.startsWith("sk-"))) {
-      throw new Error("Invalid OpenRouter API key. Please update your API key in the settings with a valid key from https://openrouter.ai/keys. Expected format: sk-or-... or sk-...");
+      // Return empty array instead of throwing to allow graceful degradation
+      console.warn("OpenRouter API key not configured. Returning empty model list.");
+      return [];
     }
 
-    const service = new OpenRouterService(apiKeyRecord.key_value);
-    return await service.getModels();
+    try {
+      const service = new OpenRouterService(apiKeyRecord.key_value);
+      return await service.getModels();
+    } catch (error) {
+      console.error("Error fetching models from OpenRouter:", error);
+      return [];
+    }
   }
 
   static async getPopularModels(): Promise<string[]> {
@@ -158,26 +161,33 @@ export class SpeedTestService {
       
       // Fallback to hardcoded popular models if no saved models
       const popularModelIds = [
-        "z-ai/glm-4.5",
-        "z-ai/glm-4.5-air",
-        "deepseek/deepseek-chat-v3.1",
-        "moonshotai/kimi-k2",
-        "qwen/qwen3-coder"
+        "openai/gpt-4o-mini",
+        "openai/gpt-3.5-turbo",
+        "anthropic/claude-3-haiku",
+        "google/gemini-flash-1.5",
+        "meta-llama/llama-3.1-8b-instruct"
       ];
 
       const models = await this.getAvailableModels();
-      const available = new Set((models || []).map((m: any) => m.id));
-      const filtered = popularModelIds.filter((id) => available.has(id));
-      return filtered.length > 0 ? filtered : popularModelIds;
+      if (models.length > 0) {
+        const available = new Set((models || []).map((m: any) => m.id));
+        const filtered = popularModelIds.filter((id) => available.has(id));
+        if (filtered.length > 0) {
+          return filtered;
+        }
+      }
+      
+      // Return hardcoded fallback
+      return popularModelIds;
     } catch (error) {
       console.error("Error getting popular models:", error);
       // On error, return hardcoded fallback
       return [
-        "z-ai/glm-4.5",
-        "z-ai/glm-4.5-air",
-        "deepseek/deepseek-chat-v3.1",
-        "moonshotai/kimi-k2",
-        "qwen/qwen3-coder"
+        "openai/gpt-4o-mini",
+        "openai/gpt-3.5-turbo",
+        "anthropic/claude-3-haiku",
+        "google/gemini-flash-1.5",
+        "meta-llama/llama-3.1-8b-instruct"
       ];
     }
   }

@@ -51,40 +51,19 @@ async def run_test():
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # Click on 'Browse & Add Models' button to start adding a new LLM provider
+        # Find and click the button or link to add/create a new LLM provider
         frame = context.pages[-1]
         elem = frame.locator('xpath=html/body/div/div/main/div/div[2]/div/button').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # Navigate to LLM providers management to create a new provider
+        # Look for a button or link to add/create a new LLM provider
         frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div').nth(0)
+        elem = frame.locator('xpath=html/body/div/div/main/div/div[2]/div/button[2]').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # Locate and click the button or link to add a new LLM provider
-        await page.mouse.wheel(0, window.innerHeight)
-        
-
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/header/div/div/button').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
-        
-
-        # Click on 'Manage LLMs' button (index 2) to try accessing LLM providers management again
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/header/div/div[2]/button[2]').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
-        
-
-        # Look for a button or link to add a new LLM provider, possibly by interacting with the 'Select a provider...' dropdown or other UI elements.
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/main/div/div[2]/div[2]/div/div/div[2]/button').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
-        
-
-        assert False, 'Test plan execution failed: generic failure assertion.'
+        assert False, 'Test plan execution failed: generic failure assertion'
         await asyncio.sleep(5)
     
     finally:

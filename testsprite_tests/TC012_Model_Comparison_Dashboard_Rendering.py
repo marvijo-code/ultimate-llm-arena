@@ -45,49 +45,82 @@ async def run_test():
                 pass
         
         # Interact with the page elements to simulate user flow
-        # Click on the Dashboard button to open the Model Comparison Dashboard
+        # Click the Dashboard button to open the Model Comparison Dashboard
         frame = context.pages[-1]
         elem = frame.locator('xpath=html/body/div/div/main/div/div/div[3]/div/div/div/button[3]').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # Try to refresh data or adjust date range to load charts with data
+        # Try to refresh the dashboard data by clicking the Refresh button to see if charts load with data
         frame = context.pages[-1]
         elem = frame.locator('xpath=html/body/div/div/main/div/div/div/button').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # Adjust the date range to an earlier period to try to load available data and then apply filter
+        # Clear the 'to' date input field (index 6) using keyboard actions and then input a wider date range to try loading data
         frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/main/div/div/div[2]/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('2025-08-01')
+        elem = frame.locator('xpath=html/body/div/div/main/div/div/div[2]/input[2]').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # Check if there is any way to navigate back or refresh data differently to attempt loading data
+        frame = context.pages[-1]
+        elem = frame.locator('xpath=html/body/div/div/main/div/div/div[2]/input[2]').nth(0)
+        await page.wait_for_timeout(3000); await elem.fill('2025-12-31')
+        
+
+        frame = context.pages[-1]
+        elem = frame.locator('xpath=html/body/div/div/main/div/div/div[2]/button').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        # Navigate back to the main arena page to check if there is an option to run tests or generate data to populate the dashboard
         frame = context.pages[-1]
         elem = frame.locator('xpath=html/body/div/div/main/div/div/div/div/button').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # Click Dashboard button to retry opening the Performance Dashboard
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/main/div/div/div[3]/div/div/div/button[3]').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
-        
-
-        # Go back to main arena page to run some tests to generate data for the dashboard
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/main/div/div/div/div/button').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
-        
-
-        # Select models and run a test to generate data for dashboard charts
+        # Select 3 models to run a test and generate data for the dashboard
         frame = context.pages[-1]
         elem = frame.locator('xpath=html/body/div/div/header/div/div[2]/button').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        assert False, 'Test plan execution failed: generic failure assertion.'
+        # Try to reload the models list by refreshing the page or clicking any available reload button, or try searching for models using the search input
+        frame = context.pages[-1]
+        elem = frame.locator('xpath=html/body/div/div/header/div/div[2]/button').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        frame = context.pages[-1]
+        elem = frame.locator('xpath=html/body/div/div/main/div/div[2]/div[2]/div/div[3]/div/input').nth(0)
+        await page.wait_for_timeout(3000); await elem.fill('gpt')
+        
+
+        # Click the Back button to return to the main page and then try to reload the Exercism page again to attempt to load models
+        frame = context.pages[-1]
+        elem = frame.locator('xpath=html/body/div/div/main/div/div/button').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        # Click the Manage LLMs button to check if models can be managed or reloaded from there
+        frame = context.pages[-1]
+        elem = frame.locator('xpath=html/body/div/div/header/div/div[2]/button[2]').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        # Open the 'Select a provider...' dropdown to choose an LLM provider and load models
+        frame = context.pages[-1]
+        elem = frame.locator('xpath=html/body/div/div/main/div/div[2]/div[2]/div/div/div[2]/button').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        # Select the first available LLM provider from the dropdown to load available models
+        frame = context.pages[-1]
+        elem = frame.locator('xpath=html/body/div[2]/div').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        assert False, 'Test plan execution failed: generic failure assertion'
         await asyncio.sleep(5)
     
     finally:

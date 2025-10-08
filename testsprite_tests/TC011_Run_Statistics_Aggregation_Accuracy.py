@@ -45,28 +45,32 @@ async def run_test():
                 pass
         
         # Interact with the page elements to simulate user flow
-        # Click on the Dashboard button to navigate to the Run Statistics dashboard
+        # Click on the Dashboard button to navigate to Run Statistics dashboard
         frame = context.pages[-1]
         elem = frame.locator('xpath=html/body/div/div/main/div/div/div[3]/div/div/div/button[3]').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # Change the date range to a valid range with data and click Apply Filter
+        # Select a valid date range with expected data and click Apply Filter
         frame = context.pages[-1]
         elem = frame.locator('xpath=html/body/div/div/main/div/div/div[2]/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('2025-01-01')
+        await page.wait_for_timeout(3000); await elem.fill('2025-09-01')
         
 
-        # Check if there is any other date range or data available or try refreshing or changing date range to find valid data for statistics verification
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/main/div/div/div/button').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
-        
-
-        # Try clearing the end date input field and re-entering a valid date or try a different approach to set the date range
         frame = context.pages[-1]
         elem = frame.locator('xpath=html/body/div/div/main/div/div/div[2]/input[2]').nth(0)
+        await page.wait_for_timeout(3000); await elem.fill('2025-09-30')
+        
+
+        frame = context.pages[-1]
+        elem = frame.locator('xpath=html/body/div/div/main/div/div/div[2]/button').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        # Try clearing both date inputs and re-enter a different date range, then apply filter to check for data availability.
+        frame = context.pages[-1]
+        elem = frame.locator('xpath=html/body/div/div/main/div/div/div[2]/input').nth(0)
+        await page.wait_for_timeout(3000); await elem.fill('')
         
 
         frame = context.pages[-1]
@@ -75,19 +79,25 @@ async def run_test():
         
 
         frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/main/div/div/div[2]/input[2]').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('2024-12-31')
+        elem = frame.locator('xpath=html/body/div/div/main/div/div/div[2]/input').nth(0)
+        await page.wait_for_timeout(3000); await elem.fill('2025-07-01')
         
 
         frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/main/div/div/div[2]/button').nth(0)
+        elem = frame.locator('xpath=html/body/div/div/main/div/div/div[2]/input[2]').nth(0)
+        await page.wait_for_timeout(3000); await elem.fill('2025-07-31')
+        
+
+        # Check if there is any way to generate or load test data, or if there is a default date range with data available to verify aggregated statistics.
+        frame = context.pages[-1]
+        elem = frame.locator('xpath=html/body/div/div/main/div/div/div/button').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
         # Assertion: Verify that the page shows no data message for the selected date range
         frame = context.pages[-1]
-        no_data_message = await frame.locator('text=No data available for the selected date range').text_content()
-        assert no_data_message is not None and 'No data available' in no_data_message, 'Expected no data message not found on the page'
+        no_data_text = await frame.locator('text=No data available for the selected date range').text_content()
+        assert no_data_text is not None and 'No data available' in no_data_text, 'Expected no data message not found on the page'
         await asyncio.sleep(5)
     
     finally:

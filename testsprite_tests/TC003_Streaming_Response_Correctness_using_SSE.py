@@ -45,73 +45,50 @@ async def run_test():
                 pass
         
         # Interact with the page elements to simulate user flow
-        # Select a single model to enable running a speed test with streaming enabled.
+        # Select a single model to run the test
         frame = context.pages[-1]
         elem = frame.locator('xpath=html/body/div/div/header/div/div[2]/button').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # Investigate or retry loading models, or try to manually input/select a model to proceed with the speed test.
+        # Select a single model by typing in the model search input
         frame = context.pages[-1]
         elem = frame.locator('xpath=html/body/div/div/main/div/div[2]/div[2]/div/div[3]/div/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        await page.wait_for_timeout(3000); await elem.fill('gpt-4')
         
 
-        # Input a single model name in the models search field to select it for the speed test with streaming enabled.
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/main/div/div[2]/div[2]/div/div[3]/div/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('openai/gpt-4')
-        
-
-        # Select the model 'openai/gpt-4' from the search results to confirm selection and then click 'Run Tests' to start the speed test with streaming enabled.
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/main/div/div[2]/div[2]/div/div[3]/div/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
-        
-
+        # Select the gpt-4 model from the search results and run the test
         frame = context.pages[-1]
         elem = frame.locator('xpath=html/body/div/div/header/div/div/button').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # Input a single model name into the model search input to select it for the speed test with streaming enabled.
+        # Select a single model by typing 'gpt-4' in the model search input
         frame = context.pages[-1]
         elem = frame.locator('xpath=html/body/div/div/main/div/div/div/div/div/div[2]/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('openai/gpt-4')
+        await page.wait_for_timeout(3000); await elem.fill('gpt-4')
         
 
-        # Click the 'Run Test' button to start the speed test with streaming enabled and observe the response for incremental output and SSE connection.
+        # Select the 'gpt-4' model from the search results to add it to the test
         frame = context.pages[-1]
         elem = frame.locator('xpath=html/body/div').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # Select at least one model to meet the requirement of 0/3 models before running the test, then click 'Run Test' again to start the speed test with streaming enabled.
+        # Try to clear the model search input and re-enter 'gpt-4' to refresh the model selection UI
         frame = context.pages[-1]
         elem = frame.locator('xpath=html/body/div/div/main/div/div/div/div/div/div[2]/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        await page.wait_for_timeout(3000); await elem.fill('')
         
 
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
-        
-
-        # Select the model 'openai/gpt-4' from the search results or suggestions to confirm selection, then click 'Run Test' to start the speed test with streaming enabled.
         frame = context.pages[-1]
         elem = frame.locator('xpath=html/body/div/div/main/div/div/div/div/div/div[2]/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        await page.wait_for_timeout(3000); await elem.fill('gpt-4')
         
 
-        # Try to select the model 'openai/gpt-4' by clicking on the input field or pressing Enter to confirm selection, then click 'Run Test' to start the speed test with streaming enabled.
+        # Try to click on the model search input suggestions or dropdown to see if any selectable model options appear
         frame = context.pages[-1]
         elem = frame.locator('xpath=html/body/div/div/main/div/div/div/div/div/div[2]/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
-        
-
-        # Try to select the model 'openai/gpt-4' from the dropdown or suggestions by pressing Enter key or clicking on the suggestion, then click 'Run Test' to start the speed test with streaming enabled.
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
