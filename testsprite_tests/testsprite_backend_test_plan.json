@@ -1,0 +1,52 @@
+[
+  {
+    "id": "TC001",
+    "title": "health check endpoint verification",
+    "description": "Verify the /health GET endpoint returns a 200 status with a JSON body containing status as 'healthy' and a valid timestamp."
+  },
+  {
+    "id": "TC002",
+    "title": "openrouter models retrieval",
+    "description": "Test the /api/openrouter/models GET endpoint to ensure it returns a list of available OpenRouter models when a valid API key is configured, and returns 404 if no API key is found."
+  },
+  {
+    "id": "TC003",
+    "title": "openrouter api connection test",
+    "description": "Validate the /api/openrouter/test-connection POST endpoint by sending a valid and invalid API key and verifying the connection test results are returned correctly."
+  },
+  {
+    "id": "TC004",
+    "title": "openrouter generate completion",
+    "description": "Test the /api/openrouter/generate POST endpoint to generate text completions using OpenRouter with required parameters prompt and model, and optional temperature and max_tokens."
+  },
+  {
+    "id": "TC005",
+    "title": "openrouter api key save",
+    "description": "Verify the /api/openrouter/api-key POST endpoint securely saves the OpenRouter API key and ensures the key is encrypted and not exposed in responses."
+  },
+  {
+    "id": "TC006",
+    "title": "openrouter api key status check",
+    "description": "Test the /api/openrouter/api-key/status GET endpoint to confirm it correctly reports whether an OpenRouter API key is configured."
+  },
+  {
+    "id": "TC007",
+    "title": "speed test run non streaming",
+    "description": "Validate the /api/speed-test/run POST endpoint to run speed tests across multiple models concurrently and return aggregated results without streaming."
+  },
+  {
+    "id": "TC008",
+    "title": "speed test run streaming",
+    "description": "Test the /api/speed-test/run-stream POST endpoint to ensure it streams partial responses in real-time using Server-Sent Events (SSE) for multiple models."
+  },
+  {
+    "id": "TC009",
+    "title": "speed test history retrieval",
+    "description": "Verify the /api/speed-test/history GET endpoint returns a paginated list of previous speed test runs with correct limit parameter handling."
+  },
+  {
+    "id": "TC010",
+    "title": "llm providers and models management",
+    "description": "Test the CRUD operations on /api/llm/providers, /api/llm/models, and related endpoints to ensure LLM providers and models can be created, retrieved, updated, and deleted as expected."
+  }
+]

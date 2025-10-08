@@ -1,0 +1,864 @@
+{
+  "meta": {
+    "project": "Ultimate LLM Arena",
+    "date": "2025-10-04",
+    "prepared_by": "Software Development Manager"
+  },
+  "product_overview": "Ultimate LLM Arena is a web-based platform that allows users to compare performance, speed, and quality of multiple Large Language Models (LLMs) by running identical prompts simultaneously. It supports real-time streaming responses, coding challenge evaluations, model/provider management, and comprehensive analytics to aid AI researchers, developers, and product managers in making data-driven LLM selections.",
+  "core_goals": [
+    "Enable side-by-side comparison of multiple LLMs with identical prompts to evaluate response times and quality.",
+    "Provide real-time streaming of LLM responses to observe speed and partial outputs.",
+    "Offer structured coding challenge evaluations using Exercism exercises for objective code quality assessments.",
+    "Allow secure management of API keys and configuration of multiple LLM providers and their models.",
+    "Track, store, and analyze historical test runs with detailed statistics and filtering.",
+    "Present a modern, user-friendly interface with dark and light theme support."
+  ],
+  "key_features": [
+    "Speed Test Arena to run identical prompts on up to 3 LLM models simultaneously and display streaming responses with response times and history saving.",
+    "Exercism Code Challenges integration to test LLMs on real coding exercises with pass/fail results, execution times, and generation views.",
+    "LLM Provider and Model Management supporting CRUD operations, enabling/disabling models, and validating provider API connectivity.",
+    "API Key Management system to securely store encrypted keys, test connectivity, and protect sensitive data from user exposure.",
+    "Run History and Analytics to view paginated historical test runs with date-based filtering and aggregated model performance statistics.",
+    "Model Comparison Dashboard with visual charts showing average speeds, success rates, and usage trends for informed decision making.",
+    "Real-time streaming responses implemented with Server-Sent Events (SSE) for immediate incremental feedback from models.",
+    "Dark/Light Theme toggle for user comfort with preferences saved across sessions."
+  ],
+  "user_flow_summary": [
+    "User selects up to three LLM models from a dropdown and enters a prompt for speed testing.",
+    "User initiates a speed test; the system sends the prompt concurrently to selected models and streams partial responses in real-time.",
+    "User views streaming model outputs side-by-side with displayed response times and can adjust parameters like temperature and max tokens.",
+    "User accesses Exercism challenges list, selects an exercise and models, then runs the challenge to see test-case-based results and code generation per model.",
+    "Admin or user manages LLM providers and models by adding providers, fetching available models via API keys, enabling/disabling models, and configuring details.",
+    "User securely inputs and updates API keys, tests connectivity, and receives status feedback without exposing keys.",
+    "User reviews past speed test runs and Exercism challenge history with filtering by date and pagination, examining detailed results and aggregated statistics.",
+    "User toggles UI themes between dark and light modes with preferences saved locally for persistence."
+  ],
+  "validation_criteria": [
+    "Speed tests run successfully on up to 3 selected models with accurate concurrent execution and streaming output.",
+    "Streaming responses are displayed character-by-character via SSE with correct response time measurement starting at first token.",
+    "Exercism challenges execute with correct test case running, pass/fail display, and code output per model.",
+    "API keys are stored encrypted, connectivity testing works reliably, and keys are masked from user after saving.",
+    "CRUD operations on LLM providers and models function as expected, with model lists refreshable from providers.",
+    "Run history data is persistently stored, retrievable by pagination and date filters, and statistics calculations are accurate.",
+    "Dashboard charts render correctly showing average speeds, success/failure rates, and popular model metrics reflecting latest data.",
+    "UI theme toggle functions properly, preference persists between sessions, and interface components remain readable and consistent in both themes."
+  ],
+  "code_summary": {
+    "tech_stack": [
+      "TypeScript",
+      "Deno",
+      "Oak (Web Framework)",
+      "SQLite",
+      "React 19",
+      "Vite",
+      "TailwindCSS",
+      "ShadCN UI",
+      "OpenRouter API"
+    ],
+    "features": [
+      {
+        "name": "Health Check",
+        "description": "Simple health check endpoint to verify API is running",
+        "files": [
+          "backend/main.ts"
+        ],
+        "api_doc": {
+          "openapi": "3.0.0",
+          "paths": {
+            "/health": {
+              "get": {
+                "summary": "Health check endpoint",
+                "responses": {
+                  "200": {
+                    "description": "API is healthy",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "type": "object",
+                          "properties": {
+                            "status": {
+                              "type": "string",
+                              "example": "healthy"
+                            },
+                            "timestamp": {
+                              "type": "string",
+                              "format": "date-time"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "OpenRouter Models Management",
+        "description": "Fetch, list, and manage OpenRouter LLM models with API key management",
+        "files": [
+          "backend/routes/openRouter.ts",
+          "backend/services/openRouterService.ts"
+        ],
+        "api_doc": {
+          "openapi": "3.0.0",
+          "paths": {
+            "/api/openrouter/models": {
+              "get": {
+                "summary": "Get all available OpenRouter models",
+                "responses": {
+                  "200": {
+                    "description": "List of available models",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "type": "object",
+                          "properties": {
+                            "success": {
+                              "type": "boolean"
+                            },
+                            "data": {
+                              "type": "array"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "404": {
+                    "description": "API key not found"
+                  }
+                }
+              }
+            },
+            "/api/openrouter/test-connection": {
+              "post": {
+                "summary": "Test OpenRouter API connection",
+                "requestBody": {
+                  "required": true,
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "apiKey": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "apiKey"
+                        ]
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "200": {
+                    "description": "Connection test result"
+                  }
+                }
+              }
+            },
+            "/api/openrouter/generate": {
+              "post": {
+                "summary": "Generate completion using OpenRouter",
+                "requestBody": {
+                  "required": true,
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "prompt": {
+                            "type": "string"
+                          },
+                          "model": {
+                            "type": "string"
+                          },
+                          "temperature": {
+                            "type": "number",
+                            "default": 0.7
+                          },
+                          "max_tokens": {
+                            "type": "integer",
+                            "default": 1000
+                          }
+                        },
+                        "required": [
+                          "prompt",
+                          "model"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "/api/openrouter/api-key": {
+              "post": {
+                "summary": "Save OpenRouter API key",
+                "requestBody": {
+                  "required": true,
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "apiKey": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "apiKey"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "/api/openrouter/api-key/status": {
+              "get": {
+                "summary": "Check if OpenRouter API key is configured",
+                "responses": {
+                  "200": {
+                    "description": "API key status",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "type": "object",
+                          "properties": {
+                            "success": {
+                              "type": "boolean"
+                            },
+                            "data": {
+                              "type": "object",
+                              "properties": {
+                                "hasApiKey": {
+                                  "type": "boolean"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "Speed Test Runner",
+        "description": "Run LLM speed tests across multiple models simultaneously with streaming and non-streaming support",
+        "files": [
+          "backend/routes/speedTest.ts",
+          "backend/services/speedTestService.ts"
+        ],
+        "api_doc": {
+          "openapi": "3.0.0",
+          "paths": {
+            "/api/speed-test/run": {
+              "post": {
+                "summary": "Run speed test across multiple models (non-streaming)",
+                "requestBody": {
+                  "required": true,
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "prompt": {
+                            "type": "string"
+                          },
+                          "models": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "temperature": {
+                            "type": "number",
+                            "default": 0.7
+                          },
+                          "max_tokens": {
+                            "type": "integer",
+                            "default": 1000
+                          }
+                        },
+                        "required": [
+                          "prompt",
+                          "models"
+                        ]
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "200": {
+                    "description": "Speed test results"
+                  }
+                }
+              }
+            },
+            "/api/speed-test/run-stream": {
+              "post": {
+                "summary": "Run speed test with Server-Sent Events streaming",
+                "requestBody": {
+                  "required": true,
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "prompt": {
+                            "type": "string"
+                          },
+                          "models": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "temperature": {
+                            "type": "number",
+                            "default": 0.7
+                          },
+                          "max_tokens": {
+                            "type": "integer",
+                            "default": 1000
+                          }
+                        },
+                        "required": [
+                          "prompt",
+                          "models"
+                        ]
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "200": {
+                    "description": "SSE stream of speed test events",
+                    "content": {
+                      "text/event-stream": {}
+                    }
+                  }
+                }
+              }
+            },
+            "/api/speed-test/history": {
+              "get": {
+                "summary": "Get speed test history",
+                "parameters": [
+                  {
+                    "name": "limit",
+                    "in": "query",
+                    "schema": {
+                      "type": "integer",
+                      "default": 20
+                    }
+                  }
+                ],
+                "responses": {
+                  "200": {
+                    "description": "List of previous speed tests"
+                  }
+                }
+              }
+            },
+            "/api/speed-test/models": {
+              "get": {
+                "summary": "Get available models for speed testing"
+              }
+            },
+            "/api/speed-test/popular-models": {
+              "get": {
+                "summary": "Get popular/recommended models"
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "LLM Provider Management",
+        "description": "Manage LLM providers and their models (CRUD operations)",
+        "files": [
+          "backend/routes/llmManagement.ts",
+          "backend/main.ts"
+        ],
+        "api_doc": {
+          "openapi": "3.0.0",
+          "paths": {
+            "/api/llm/providers": {
+              "get": {
+                "summary": "Get all LLM providers",
+                "responses": {
+                  "200": {
+                    "description": "List of LLM providers"
+                  }
+                }
+              }
+            },
+            "/api/llm/providers/{name}": {
+              "get": {
+                "summary": "Get specific LLM provider by name",
+                "parameters": [
+                  {
+                    "name": "name",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                      "type": "string"
+                    }
+                  }
+                ]
+              }
+            },
+            "/api/llm/providers/{name}/models": {
+              "get": {
+                "summary": "Fetch models from provider API",
+                "parameters": [
+                  {
+                    "name": "name",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                      "type": "string"
+                    }
+                  },
+                  {
+                    "name": "apiKey",
+                    "in": "query",
+                    "schema": {
+                      "type": "string"
+                    }
+                  }
+                ]
+              },
+              "post": {
+                "summary": "Fetch models from provider API (with API key in body)",
+                "requestBody": {
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "apiKey": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "/api/llm/models": {
+              "get": {
+                "summary": "Get all LLM models",
+                "parameters": [
+                  {
+                    "name": "providerId",
+                    "in": "query",
+                    "schema": {
+                      "type": "integer"
+                    }
+                  }
+                ]
+              },
+              "post": {
+                "summary": "Create new LLM model",
+                "requestBody": {
+                  "required": true,
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "provider_id": {
+                            "type": "integer"
+                          },
+                          "model_id": {
+                            "type": "string"
+                          },
+                          "display_name": {
+                            "type": "string"
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "is_enabled": {
+                            "type": "boolean"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "/api/llm/models/{id}": {
+              "get": {
+                "summary": "Get LLM model by ID",
+                "parameters": [
+                  {
+                    "name": "id",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                      "type": "integer"
+                    }
+                  }
+                ]
+              },
+              "put": {
+                "summary": "Update LLM model",
+                "parameters": [
+                  {
+                    "name": "id",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                      "type": "integer"
+                    }
+                  }
+                ],
+                "requestBody": {
+                  "required": true,
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              },
+              "delete": {
+                "summary": "Delete LLM model",
+                "parameters": [
+                  {
+                    "name": "id",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                      "type": "integer"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "Exercism Code Challenges",
+        "description": "Run coding challenges from Exercism against multiple LLM models",
+        "files": [
+          "backend/routes/exercism.ts",
+          "backend/services/exercismService.ts"
+        ],
+        "api_doc": {
+          "openapi": "3.0.0",
+          "paths": {
+            "/api/exercism/exercises": {
+              "get": {
+                "summary": "List available Exercism exercises",
+                "responses": {
+                  "200": {
+                    "description": "List of exercises",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "type": "object",
+                          "properties": {
+                            "success": {
+                              "type": "boolean"
+                            },
+                            "data": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string"
+                                  },
+                                  "name": {
+                                    "type": "string"
+                                  },
+                                  "description": {
+                                    "type": "string"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "/api/exercism/run": {
+              "post": {
+                "summary": "Run an Exercism challenge against selected models",
+                "requestBody": {
+                  "required": true,
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "exerciseId": {
+                            "type": "string"
+                          },
+                          "models": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "testCount": {
+                            "type": "integer"
+                          }
+                        },
+                        "required": [
+                          "exerciseId",
+                          "models"
+                        ]
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "200": {
+                    "description": "Challenge results for each model"
+                  }
+                }
+              }
+            },
+            "/api/exercism/history": {
+              "get": {
+                "summary": "Get Exercism challenge history",
+                "parameters": [
+                  {
+                    "name": "limit",
+                    "in": "query",
+                    "schema": {
+                      "type": "integer",
+                      "default": 50
+                    }
+                  }
+                ],
+                "responses": {
+                  "200": {
+                    "description": "List of previous exercise runs"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "Run History & Statistics",
+        "description": "Track and analyze speed test run history with statistics",
+        "files": [
+          "backend/routes/runHistory.ts",
+          "backend/db.ts"
+        ],
+        "api_doc": {
+          "openapi": "3.0.0",
+          "paths": {
+            "/api/run-history": {
+              "post": {
+                "summary": "Save a speed test run to history",
+                "requestBody": {
+                  "required": true,
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "prompt": {
+                            "type": "string"
+                          },
+                          "models": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "results": {
+                            "type": "array",
+                            "items": {
+                              "type": "object"
+                            }
+                          }
+                        },
+                        "required": [
+                          "prompt",
+                          "models",
+                          "results"
+                        ]
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "200": {
+                    "description": "Run saved successfully",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "type": "object",
+                          "properties": {
+                            "success": {
+                              "type": "boolean"
+                            },
+                            "data": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "integer"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "get": {
+                "summary": "Get run history with pagination and date filtering",
+                "parameters": [
+                  {
+                    "name": "limit",
+                    "in": "query",
+                    "schema": {
+                      "type": "integer",
+                      "default": 50
+                    }
+                  },
+                  {
+                    "name": "offset",
+                    "in": "query",
+                    "schema": {
+                      "type": "integer",
+                      "default": 0
+                    }
+                  },
+                  {
+                    "name": "startDate",
+                    "in": "query",
+                    "schema": {
+                      "type": "string",
+                      "format": "date"
+                    }
+                  },
+                  {
+                    "name": "endDate",
+                    "in": "query",
+                    "schema": {
+                      "type": "string",
+                      "format": "date"
+                    }
+                  }
+                ],
+                "responses": {
+                  "200": {
+                    "description": "List of run history records"
+                  }
+                }
+              }
+            },
+            "/api/run-stats": {
+              "get": {
+                "summary": "Get statistics for speed test runs",
+                "parameters": [
+                  {
+                    "name": "startDate",
+                    "in": "query",
+                    "schema": {
+                      "type": "string",
+                      "format": "date"
+                    }
+                  },
+                  {
+                    "name": "endDate",
+                    "in": "query",
+                    "schema": {
+                      "type": "string",
+                      "format": "date"
+                    }
+                  }
+                ],
+                "responses": {
+                  "200": {
+                    "description": "Run statistics including counts, averages, etc."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "Test Results",
+        "description": "Retrieve stored test results from database",
+        "files": [
+          "backend/main.ts",
+          "backend/services/dbService.ts"
+        ],
+        "api_doc": {
+          "openapi": "3.0.0",
+          "paths": {
+            "/api/test-results": {
+              "get": {
+                "summary": "Get test results from database",
+                "parameters": [
+                  {
+                    "name": "limit",
+                    "in": "query",
+                    "schema": {
+                      "type": "integer",
+                      "default": 50
+                    }
+                  }
+                ],
+                "responses": {
+                  "200": {
+                    "description": "List of test results",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "type": "object",
+                          "properties": {
+                            "success": {
+                              "type": "boolean"
+                            },
+                            "data": {
+                              "type": "array"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,531 @@
+[
+  {
+    "id": "TC001",
+    "title": "Speed Test with Three LLM Models",
+    "description": "Verify speed test runs successfully with three selected LLM models concurrently and streaming responses are displayed correctly.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to Speed Test Arena page"
+      },
+      {
+        "type": "action",
+        "description": "Select three different LLM models from the dropdown"
+      },
+      {
+        "type": "action",
+        "description": "Enter a valid prompt text"
+      },
+      {
+        "type": "action",
+        "description": "Set optional parameters (temperature and max tokens) to default values"
+      },
+      {
+        "type": "action",
+        "description": "Click the 'Run Speed Test' button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that streaming responses from all three models appear side-by-side"
+      },
+      {
+        "type": "assertion",
+        "description": "Check that response times start measurement at first token for each model"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm that the test run result is saved in history"
+      }
+    ]
+  },
+  {
+    "id": "TC002",
+    "title": "Speed Test with No Models Selected",
+    "description": "Verify proper validation and error handling when user attempts to run a speed test without selecting any LLM models.",
+    "category": "error handling",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to Speed Test Arena page"
+      },
+      {
+        "type": "action",
+        "description": "Leave model selection empty"
+      },
+      {
+        "type": "action",
+        "description": "Enter a valid prompt"
+      },
+      {
+        "type": "action",
+        "description": "Attempt to run the speed test"
+      },
+      {
+        "type": "assertion",
+        "description": "Check that the system displays an error indicating at least one model must be selected"
+      }
+    ]
+  },
+  {
+    "id": "TC003",
+    "title": "Streaming Response Correctness using SSE",
+    "description": "Verify that real-time streaming responses are delivered via Server-Sent Events and partial outputs are incrementally appended.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Start a speed test with streaming enabled using a single model"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that response characters are received incrementally and displayed in real-time"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm SSE connection is properly opened and closed without errors"
+      }
+    ]
+  },
+  {
+    "id": "TC004",
+    "title": "Exercism Code Challenge Execution",
+    "description": "Verify that selected Exercism challenge runs correctly against multiple LLM models and test case results are displayed accurately.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to Exercism Challenges section"
+      },
+      {
+        "type": "action",
+        "description": "Select one exercise from the available list"
+      },
+      {
+        "type": "action",
+        "description": "Select multiple LLM models for testing"
+      },
+      {
+        "type": "action",
+        "description": "Run the challenge execution"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that test case pass/fail results are shown for each model"
+      },
+      {
+        "type": "assertion",
+        "description": "Check that code generation views per model are accessible"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm execution times are displayed correctly"
+      }
+    ]
+  },
+  {
+    "id": "TC005",
+    "title": "Exercism Challenge with No Models Selected",
+    "description": "Verify error handling when running Exercism challenges without selecting any LLM models.",
+    "category": "error handling",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to Exercism Challenges section"
+      },
+      {
+        "type": "action",
+        "description": "Select an exercise"
+      },
+      {
+        "type": "action",
+        "description": "Do not select any models"
+      },
+      {
+        "type": "action",
+        "description": "Attempt to run the challenge"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify system shows an error requesting at least one model selection"
+      }
+    ]
+  },
+  {
+    "id": "TC006",
+    "title": "API Key Storage and Masking",
+    "description": "Verify that API keys are stored securely with encryption, masked in the UI, and not exposed after saving.",
+    "category": "security",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to API Key Management interface"
+      },
+      {
+        "type": "action",
+        "description": "Enter a valid API key for an LLM provider"
+      },
+      {
+        "type": "action",
+        "description": "Save the API key"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm the API key is masked or hidden in the UI after saving"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify backend stores API key in encrypted form"
+      },
+      {
+        "type": "action",
+        "description": "Attempt to retrieve API key value from user interface again"
+      },
+      {
+        "type": "assertion",
+        "description": "Check that full API key is not displayed or accessible"
+      }
+    ]
+  },
+  {
+    "id": "TC007",
+    "title": "API Key Connectivity Test",
+    "description": "Verify that testing API key connectivity returns correct status feedback for valid and invalid keys.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Open API Key Management"
+      },
+      {
+        "type": "action",
+        "description": "Input a valid API key and trigger connectivity test"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a success message is shown indicating connectivity is confirmed"
+      },
+      {
+        "type": "action",
+        "description": "Input an invalid or expired API key and test connectivity"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify error message is displayed indicating connectivity failure"
+      }
+    ]
+  },
+  {
+    "id": "TC008",
+    "title": "CRUD Operations on LLM Providers",
+    "description": "Verify the create, read, update, and delete operations function correctly for LLM providers including model list refresh via API.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Create a new LLM provider with all required fields"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm new provider appears in providers list"
+      },
+      {
+        "type": "action",
+        "description": "Update an existing provider's details"
+      },
+      {
+        "type": "assertion",
+        "description": "Check updated values persist correctly"
+      },
+      {
+        "type": "action",
+        "description": "Fetch available models from provider using valid API key"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify model list refreshes with data from provider API"
+      },
+      {
+        "type": "action",
+        "description": "Delete an existing provider"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify provider is removed from the list and dependent models are handled appropriately"
+      }
+    ]
+  },
+  {
+    "id": "TC009",
+    "title": "Enable/Disable LLM Models",
+    "description": "Verify enabling and disabling LLM models updates their availability for speed tests and Exercism challenges.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to LLM model management section"
+      },
+      {
+        "type": "action",
+        "description": "Disable an enabled model"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the model is no longer selectable in Speed Test or Exercism challenge interfaces"
+      },
+      {
+        "type": "action",
+        "description": "Enable a disabled model"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm the model is selectable again in relevant test interfaces"
+      }
+    ]
+  },
+  {
+    "id": "TC010",
+    "title": "Run History Pagination and Date Filtering",
+    "description": "Verify the run history page properly paginates results and applies start/end date filters for both speed test and Exercism challenge history.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to Run History section"
+      },
+      {
+        "type": "action",
+        "description": "Set a date range filter"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that only records within the date range are shown"
+      },
+      {
+        "type": "action",
+        "description": "Navigate through multiple pages of history using pagination controls"
+      },
+      {
+        "type": "assertion",
+        "description": "Check that records update correctly per page without duplication"
+      }
+    ]
+  },
+  {
+    "id": "TC011",
+    "title": "Run Statistics Aggregation Accuracy",
+    "description": "Verify that aggregated statistics for speed test runs (like average response time, success rates) calculated and displayed are accurate based on selected date ranges.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to Run Statistics dashboard"
+      },
+      {
+        "type": "action",
+        "description": "Select a valid date range"
+      },
+      {
+        "type": "assertion",
+        "description": "Calculate expected averages and success rates from sample data and compare with displayed statistics"
+      }
+    ]
+  },
+  {
+    "id": "TC012",
+    "title": "Model Comparison Dashboard Rendering",
+    "description": "Verify dashboard charts correctly render average speeds, success/failure rates and usage trends with latest data reflected accurately.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Open Model Comparison Dashboard"
+      },
+      {
+        "type": "assertion",
+        "description": "Check bar charts, line charts and pie charts load without errors"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify metrics displayed correspond with underlying run history data"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm charts update dynamically when new data is available or filters are applied"
+      }
+    ]
+  },
+  {
+    "id": "TC013",
+    "title": "Dark/Light Theme Toggle Functionality",
+    "description": "Ensure the UI theme toggle switches between dark and light modes, UI components remain readable and user preference persists across sessions.",
+    "category": "ui",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Locate and toggle the dark/light theme switch in the UI"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify UI switches between dark and light themes visually"
+      },
+      {
+        "type": "assertion",
+        "description": "Check interface components maintain readability and proper styling in both themes"
+      },
+      {
+        "type": "action",
+        "description": "Refresh the page or close and reopen the app"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm previously selected theme preference is preserved"
+      }
+    ]
+  },
+  {
+    "id": "TC014",
+    "title": "Health Check Endpoint Verification",
+    "description": "Verify that the health check API endpoint responds with status 'healthy' and a valid timestamp.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Send a GET request to /health endpoint"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify response status is 200"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm response JSON contains 'status' with value 'healthy' and a correctly formatted 'timestamp'"
+      }
+    ]
+  },
+  {
+    "id": "TC015",
+    "title": "Speed Test with Maximum Token Limit",
+    "description": "Test speed test execution with a maximum token parameter set to very low and very high values to verify proper handling and result accuracy.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Select one LLM model"
+      },
+      {
+        "type": "action",
+        "description": "Enter a valid prompt"
+      },
+      {
+        "type": "action",
+        "description": "Set max_tokens to a very low value (e.g. 1) and run speed test"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that response is truncated or limited according to max_tokens"
+      },
+      {
+        "type": "action",
+        "description": "Set max_tokens to a very high value (e.g. 10000) and run speed test"
+      },
+      {
+        "type": "assertion",
+        "description": "Check that system handles token limit without errors and response completes or truncates as needed"
+      }
+    ]
+  },
+  {
+    "id": "TC016",
+    "title": "Prompt with Special Characters and Edge Cases",
+    "description": "Verify system behavior when prompts contain special characters, emojis, long inputs, and empty strings.",
+    "category": "error handling",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Enter a prompt with special characters and emojis"
+      },
+      {
+        "type": "action",
+        "description": "Run speed test on a valid model"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify streaming response completes successfully and contains expected output"
+      },
+      {
+        "type": "action",
+        "description": "Enter an extremely long prompt exceeding normal length limits"
+      },
+      {
+        "type": "action",
+        "description": "Run speed test and observe behavior"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm system handles input gracefully without crashing, or displays proper validation errors"
+      },
+      {
+        "type": "action",
+        "description": "Enter an empty prompt"
+      },
+      {
+        "type": "action",
+        "description": "Attempt to run speed test"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify system prevents test run and shows appropriate validation error"
+      }
+    ]
+  },
+  {
+    "id": "TC017",
+    "title": "API Error Handling and Timeouts",
+    "description": "Verify proper user messages and recovery when APIs for models, speed test, or Exercism challenges return errors or timeout.",
+    "category": "error handling",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Simulate API failure or timeout when fetching models"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify UI displays a user-friendly error message with retry option"
+      },
+      {
+        "type": "action",
+        "description": "Simulate API failure during speed test execution"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm error handling shows appropriate messages without crashing"
+      },
+      {
+        "type": "action",
+        "description": "Simulate failure response for Exercism challenge run"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify error notification is shown and user can retry"
+      }
+    ]
+  }
+]
