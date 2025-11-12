@@ -51,29 +51,19 @@ async def run_test():
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # Try to refresh the dashboard data by clicking the Refresh button to see if charts load with data
+        # Click Refresh button to attempt loading latest data or trigger data refresh
         frame = context.pages[-1]
         elem = frame.locator('xpath=html/body/div/div/main/div/div/div/button').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # Clear the 'to' date input field (index 6) using keyboard actions and then input a wider date range to try loading data
+        # Adjust date range to a wider or past range to check if any data is available and charts render
         frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/main/div/div/div[2]/input[2]').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        elem = frame.locator('xpath=html/body/div/div/main/div/div/div[2]/input').nth(0)
+        await page.wait_for_timeout(3000); await elem.fill('2025-01-01')
         
 
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/main/div/div/div[2]/input[2]').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('2025-12-31')
-        
-
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/main/div/div/div[2]/button').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
-        
-
-        # Navigate back to the main arena page to check if there is an option to run tests or generate data to populate the dashboard
+        # Check if there is a way to navigate to a test run or data input page to generate or view test data for dashboard
         frame = context.pages[-1]
         elem = frame.locator('xpath=html/body/div/div/main/div/div/div/div/button').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
@@ -85,38 +75,21 @@ async def run_test():
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # Try to reload the models list by refreshing the page or clicking any available reload button, or try searching for models using the search input
+        # Try to refresh or reload models list or check for alternative ways to select models
         frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/header/div/div[2]/button').nth(0)
+        elem = frame.locator('xpath=html/body/div/div/header/div/div/button').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
+        # Search and select 3 models to run a test
         frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/main/div/div[2]/div[2]/div/div[3]/div/input').nth(0)
+        elem = frame.locator('xpath=html/body/div/div/main/div/div/div/div/div/div[2]/input').nth(0)
         await page.wait_for_timeout(3000); await elem.fill('gpt')
         
 
-        # Click the Back button to return to the main page and then try to reload the Exercism page again to attempt to load models
+        # Select up to 3 models from the search results to run a test
         frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/main/div/div/button').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
-        
-
-        # Click the Manage LLMs button to check if models can be managed or reloaded from there
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/header/div/div[2]/button[2]').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
-        
-
-        # Open the 'Select a provider...' dropdown to choose an LLM provider and load models
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/main/div/div[2]/div[2]/div/div/div[2]/button').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
-        
-
-        # Select the first available LLM provider from the dropdown to load available models
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div[2]/div').nth(0)
+        elem = frame.locator('xpath=html/body/div/div/main/div/div/div/div/div/div[2]/input').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 

@@ -51,37 +51,13 @@ async def run_test():
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # Attempt to run the challenge without selecting any models to verify error handling
+        # Click on 'Run Tests' button to attempt running the challenge without selecting any models and verify error handling
         frame = context.pages[-1]
         elem = frame.locator('xpath=html/body/div').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # Click the Run Tests button to attempt running the challenge without selecting any models
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/header/div/div/button').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
-        
-
-        # Click the 'Exercism' button to enter the Exercism Challenges section
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/header/div/div[2]/button').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
-        
-
-        # Click the 'Run Tests' button to attempt running the challenge without selecting any models and verify error handling
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/header/div/div/button').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
-        
-
-        # Verify that running the challenge without selecting any models triggers an appropriate error message requesting at least one model selection
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/main/div/div/div[3]/div/div/div/div/button').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
-        
-
-        assert False, 'Test failed: Expected error message for no model selection is not verified.'
+        assert False, 'Test failed due to unknown expected result; this assertion is intentionally failing.'
         await asyncio.sleep(5)
     
     finally:

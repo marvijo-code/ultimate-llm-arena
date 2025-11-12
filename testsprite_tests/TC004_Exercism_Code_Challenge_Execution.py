@@ -45,128 +45,41 @@ async def run_test():
                 pass
         
         # Interact with the page elements to simulate user flow
-        # Click on the Exercism button to navigate to Exercism Challenges section
+        # Click on the Exercism button to navigate to the Exercism Challenges section.
         frame = context.pages[-1]
         elem = frame.locator('xpath=html/body/div/div/header/div/div[2]/button').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # Select an exercise from the dropdown if needed or confirm current selection, then select multiple LLM models for testing
+        # Try to select multiple LLM models for testing, or investigate model loading issue.
         frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/main/div/div[2]/div[2]/div/div/select').nth(0)
+        elem = frame.locator('xpath=html/body/div/div/main/div/div[2]/div[2]/div/div[3]/div/input').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # Input/select multiple LLM models for testing in the models search input
+        # Try to input model names manually or reload models, or report issue if no models can be selected.
         frame = context.pages[-1]
         elem = frame.locator('xpath=html/body/div/div/main/div/div[2]/div[2]/div/div[3]/div/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('openai/gpt-4')
+        await page.wait_for_timeout(3000); await elem.fill('gpt-4')
         
 
         frame = context.pages[-1]
         elem = frame.locator('xpath=html/body/div/div/main/div/div[2]/div[2]/div/div[3]/div/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('anthropic/claude-v1')
+        await page.wait_for_timeout(3000); await elem.fill('gpt-3.5-turbo')
         
 
         frame = context.pages[-1]
         elem = frame.locator('xpath=html/body/div/div/main/div/div[2]/div[2]/div/div[3]/div/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('google/bard')
+        await page.wait_for_timeout(3000); await elem.fill('llama-2')
         
 
-        # Input two more LLM models for testing to meet the requirement of multiple models
+        # Try to select multiple models properly by interacting with the models input or dropdown to register them as selected, then click 'Run Tests' button.
         frame = context.pages[-1]
         elem = frame.locator('xpath=html/body/div/div/main/div/div[2]/div[2]/div/div[3]/div/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('openai/gpt-4')
-        
-
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/main/div/div[2]/div[2]/div/div[3]/div/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('anthropic/claude-v1')
-        
-
-        # Input two more LLM models for testing to meet the requirement of multiple models
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/main/div/div[2]/div[2]/div/div[3]/div/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('openai/gpt-4')
-        
-
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/main/div/div[2]/div[2]/div/div[3]/div/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('google/bard')
-        
-
-        # Input two more LLM models for testing to meet the requirement of multiple models
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/main/div/div[2]/div[2]/div/div[3]/div/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('openai/gpt-4')
-        
-
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/main/div/div[2]/div[2]/div/div[3]/div/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('anthropic/claude-v1')
-        
-
-        # Input two more LLM models for testing to meet the requirement of multiple models
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/main/div/div[2]/div[2]/div/div[3]/div/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('openai/gpt-4')
-        
-
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/main/div/div[2]/div[2]/div/div[3]/div/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('google/bard')
-        
-
-        # Input two more LLM models for testing to meet the requirement of multiple models
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/main/div/div[2]/div[2]/div/div[3]/div/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('openai/gpt-4')
-        
-
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/main/div/div[2]/div[2]/div/div[3]/div/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('anthropic/claude-v1')
-        
-
-        # Input two more LLM models for testing to meet the requirement of multiple models
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/main/div/div[2]/div[2]/div/div[3]/div/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('openai/gpt-4')
-        
-
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/main/div/div[2]/div[2]/div/div[3]/div/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('google/bard')
-        
-
-        # Input two more LLM models for testing to meet the requirement of multiple models
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/main/div/div[2]/div[2]/div/div[3]/div/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('openai/gpt-4')
-        
-
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/main/div/div[2]/div[2]/div/div[3]/div/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('anthropic/claude-v1')
-        
-
-        # Input two more LLM models for testing to meet the requirement of multiple models
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/main/div/div[2]/div[2]/div/div[3]/div/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('openai/gpt-4')
-        
-
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/main/div/div[2]/div[2]/div/div[3]/div/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('google/bard')
-        
-
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        assert False, 'Test plan execution failed: generic failure assertion'
+        assert False, 'Test plan execution failed: generic failure assertion.'
         await asyncio.sleep(5)
     
     finally:

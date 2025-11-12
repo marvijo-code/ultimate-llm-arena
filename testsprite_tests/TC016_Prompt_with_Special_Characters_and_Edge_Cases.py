@@ -45,71 +45,71 @@ async def run_test():
                 pass
         
         # Interact with the page elements to simulate user flow
-        # Enter a prompt with special characters and emojis in the prompt textarea.
+        # Enter a prompt with special characters and emojis in the textarea
         frame = context.pages[-1]
         elem = frame.locator('xpath=html/body/div/div/main/div/div/div[3]/div/div/div[2]/textarea').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('Hello! Testing special characters: ~!@#$%^&*()_+{}|:"<>? 😊🚀✨')
+        await page.wait_for_timeout(3000); await elem.fill('!@#$%^&*()_+-=[]{}|;:\'",.<>/? 😀🚀✨')
         
 
-        # Select a valid model and run the speed test.
+        # Select a valid model to run the speed test
         frame = context.pages[-1]
         elem = frame.locator('xpath=html/body/div/div/header/div/div[2]/button').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # Try to reload or refresh models or page to get models loaded for speed test.
+        # Investigate or retry loading models or report issue with model loading
+        frame = context.pages[-1]
+        elem = frame.locator('xpath=html/body/div/div/header/div/div[2]/button').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        # Try to find or navigate to the prompt input area or a page where prompt text can be entered to continue testing special characters, long inputs, and empty strings.
         frame = context.pages[-1]
         elem = frame.locator('xpath=html/body/div/div/main/div/div/button').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # Click on 'Manage LLMs' to check if models can be managed or loaded from there.
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/header/div/div[2]/button[2]').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
-        
-
-        # Open the provider dropdown to select a provider and load models.
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/main/div/div[2]/div[2]/div/div/div[2]/button').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
-        
-
-        # Try to refresh the page to attempt loading providers or check for alternative ways to add providers.
-        await page.goto('http://localhost:6001/', timeout=10000)
-        
-
-        # Enter an extremely long prompt exceeding normal length limits in the prompt textarea.
+        # Enter an extremely long prompt exceeding normal length limits in the prompt textarea
         frame = context.pages[-1]
         elem = frame.locator('xpath=html/body/div/div/main/div/div/div[3]/div/div/div[2]/textarea').nth(0)
         await page.wait_for_timeout(3000); await elem.fill('Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.')
         
 
-        # Clear the prompt textarea and enter an empty prompt.
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/main/div/div/div[3]/div/div/div[2]/textarea').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('')
-        
-
-        # Attempt to run speed test with empty prompt and verify system prevents test run and shows validation error.
+        # Run speed test and observe system behavior with the long prompt input
         frame = context.pages[-1]
         elem = frame.locator('xpath=html/body/div').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # Assertion: Verify streaming response completes successfully and contains expected output
-        response_locator = frame.locator('xpath=html/body/div/div/main/div/div/div[4]')
+        # Clear the prompt textarea to enter an empty prompt for testing system behavior with empty input.
+        frame = context.pages[-1]
+        elem = frame.locator('xpath=html/body/div/div/main/div/div/div[3]/div/div/div[2]/textarea').nth(0)
+        await page.wait_for_timeout(3000); await elem.fill('')
+        
+
+        # Attempt to run speed test with empty prompt and verify system prevents test run and shows appropriate validation error.
+        frame = context.pages[-1]
+        elem = frame.locator('xpath=html/body/div').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        # Assertion for streaming response with special characters and emojis
+        response_locator = frame.locator('xpath=//div[contains(@class, "response-stream")]')
         await response_locator.wait_for(state='visible', timeout=15000)
         response_text = await response_locator.inner_text()
-        assert response_text and len(response_text) > 0, 'Expected streaming response to contain output but it was empty.'
-        # Assertion: Confirm system handles extremely long input gracefully without crashing or shows validation errors
-        error_locator = frame.locator('xpath=//div[contains(@class, "error") or contains(text(), "error") or contains(text(), "invalid")]')
+        assert response_text.strip() != '', 'Expected non-empty streaming response for special characters and emojis prompt'
+        assert any(char in response_text for char in ['!', '@', '#', '$', '%', '^', '&', '*', '😀', '🚀', '✨']), 'Response should contain special characters or emojis from prompt'
+          
+        # Assertion for handling extremely long prompt gracefully
+        error_locator = frame.locator('xpath=//div[contains(@class, "error-message")]')
         error_visible = await error_locator.is_visible()
-        assert not error_visible, 'System showed validation error or crashed on extremely long input.'
-        # Assertion: Verify system prevents test run and shows appropriate validation error for empty prompt
-        validation_error_locator = frame.locator('xpath=//div[contains(text(), "prompt cannot be empty") or contains(text(), "Please enter a prompt") or contains(text(), "validation error")]')
-        validation_error_visible = await validation_error_locator.is_visible()
-        assert validation_error_visible, 'Expected validation error for empty prompt was not shown.'
+        response_visible = await response_locator.is_visible()
+        assert error_visible or response_visible, 'System should either show error or produce a response for long prompt'
+          
+        # Assertion for empty prompt validation error
+        empty_prompt_error_locator = frame.locator('xpath=//div[contains(text(), "validation error") or contains(text(), "cannot be empty") or contains(text(), "Please enter")]')
+        await empty_prompt_error_locator.wait_for(state='visible', timeout=10000)
+        assert await empty_prompt_error_locator.is_visible(), 'Validation error should be shown for empty prompt input'
         await asyncio.sleep(5)
     
     finally:

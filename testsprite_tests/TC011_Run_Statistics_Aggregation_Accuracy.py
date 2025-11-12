@@ -51,15 +51,16 @@ async def run_test():
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # Select a valid date range with expected data and click Apply Filter
+        # Select a valid date range with available data and click Apply Filter
         frame = context.pages[-1]
         elem = frame.locator('xpath=html/body/div/div/main/div/div/div[2]/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('2025-09-01')
+        await page.wait_for_timeout(3000); await elem.fill('2025-01-01')
         
 
+        # Check for other date ranges or refresh data to find a range with available statistics
         frame = context.pages[-1]
         elem = frame.locator('xpath=html/body/div/div/main/div/div/div[2]/input[2]').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('2025-09-30')
+        await page.wait_for_timeout(3000); await elem.fill('2025-01-31')
         
 
         frame = context.pages[-1]
@@ -67,37 +68,65 @@ async def run_test():
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # Try clearing both date inputs and re-enter a different date range, then apply filter to check for data availability.
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/main/div/div/div[2]/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('')
-        
-
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/main/div/div/div[2]/input[2]').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('')
-        
-
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/main/div/div/div[2]/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('2025-07-01')
-        
-
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/main/div/div/div[2]/input[2]').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('2025-07-31')
-        
-
-        # Check if there is any way to generate or load test data, or if there is a default date range with data available to verify aggregated statistics.
+        # Try refreshing the data using the Refresh button to see if data becomes available
         frame = context.pages[-1]
         elem = frame.locator('xpath=html/body/div/div/main/div/div/div/button').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # Assertion: Verify that the page shows no data message for the selected date range
+        # Try selecting an earlier date range to check if any data is available for verification
         frame = context.pages[-1]
-        no_data_text = await frame.locator('text=No data available for the selected date range').text_content()
-        assert no_data_text is not None and 'No data available' in no_data_text, 'Expected no data message not found on the page'
+        elem = frame.locator('xpath=html/body/div/div/main/div/div/div[2]/input').nth(0)
+        await page.wait_for_timeout(3000); await elem.fill('2024-01-01')
+        
+
+        # Check if there is an option to run tests or generate data to enable statistics display
+        frame = context.pages[-1]
+        elem = frame.locator('xpath=html/body/div/div/main/div/div/div/div/button').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        # Select models and run a test to generate data for statistics verification
+        frame = context.pages[-1]
+        elem = frame.locator('xpath=html/body/div/div/header/div/div[2]/button').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        # Try to refresh or reload models list to enable test runs
+        frame = context.pages[-1]
+        elem = frame.locator('xpath=html/body/div/div/main/div/div/button').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        # Search for and select 3 models to run a test
+        frame = context.pages[-1]
+        elem = frame.locator('xpath=html/body/div/div/main/div/div/div/div/div/div[2]/input').nth(0)
+        await page.wait_for_timeout(3000); await elem.fill('gpt')
+        
+
+        # Select 3 models from the filtered list to run a test
+        frame = context.pages[-1]
+        elem = frame.locator('xpath=html/body/div').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        # Try to select models manually without filtering to see if selection works
+        frame = context.pages[-1]
+        elem = frame.locator('xpath=html/body/div').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        frame = context.pages[-1]
+        elem = frame.locator('xpath=html/body/div').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        frame = context.pages[-1]
+        elem = frame.locator('xpath=html/body/div').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        assert False, 'Test plan execution failed: aggregated statistics verification could not be completed due to unknown expected results.'
         await asyncio.sleep(5)
     
     finally:

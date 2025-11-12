@@ -45,25 +45,25 @@ async def run_test():
                 pass
         
         # Interact with the page elements to simulate user flow
-        # Click on 'Manage LLMs' button to navigate to LLM model management section
+        # Navigate to LLM model management section by clicking 'Manage LLMs' button.
         frame = context.pages[-1]
         elem = frame.locator('xpath=html/body/div/div/header/div/div[2]/button[2]').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # Click on the provider dropdown to select a provider and view available models
+        # Open the provider dropdown to select a provider and view available models.
         frame = context.pages[-1]
         elem = frame.locator('xpath=html/body/div/div/main/div/div[2]/div[2]/div/div/div[2]/button').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # Navigate back to main page to check if there is a way to add or manage providers or models before returning to LLM Management
+        # Select a provider from the dropdown to load available models.
         frame = context.pages[-1]
         elem = frame.locator('xpath=html/body/div[2]/div').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        assert False, 'Generic failure assertion as expected result is unknown'
+        assert False, 'Test failed due to unknown expected result'
         await asyncio.sleep(5)
     
     finally:

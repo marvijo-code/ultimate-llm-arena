@@ -45,69 +45,56 @@ async def run_test():
                 pass
         
         # Interact with the page elements to simulate user flow
-        # Select one LLM model
+        # Select one LLM model to proceed with the speed test.
         frame = context.pages[-1]
         elem = frame.locator('xpath=html/body/div/div/header/div/div[2]/button').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # Select one LLM model by searching and choosing from the model search input
+        # Investigate or retry loading models or proceed with available options if any.
+        frame = context.pages[-1]
+        elem = frame.locator('xpath=html/body/div/div/main/div/div[2]/div[2]/div/div[3]/div/input').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        # Enter a valid model name in the models search input to select a model for testing.
         frame = context.pages[-1]
         elem = frame.locator('xpath=html/body/div/div/main/div/div[2]/div[2]/div/div[3]/div/input').nth(0)
         await page.wait_for_timeout(3000); await elem.fill('gpt-4')
         
 
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/header/div/div/button').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
-        
-
-        # Enter a valid prompt and set max_tokens to 1
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/main/div/div/div[3]/div/div/div[2]/textarea').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('Write complex SQL queries to analyze sales data including joins, subqueries, and window functions.')
-        
-
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
-        
-
-        # Set max_tokens to 1 and run speed test
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/main/div/div/div/div/div/div[2]/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
-        
-
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/main/div/div/div/div/div/div[2]/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('gpt-4')
-        
-
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/header/div/div[2]/button').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
-        
-
-        # Select model 'gpt-4' again
+        # Select the 'gpt-4' model explicitly from the dropdown or autocomplete suggestions to register it for testing.
         frame = context.pages[-1]
         elem = frame.locator('xpath=html/body/div/div/main/div/div[2]/div[2]/div/div[3]/div/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('gpt-4')
-        
-
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/header/div/div/button').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # Select model 'gpt-4' by searching and clicking it
+        # Click on the model input field or dropdown to select 'gpt-4' model explicitly.
         frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/main/div/div/div/div/div/div[2]/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('gpt-4')
+        elem = frame.locator('xpath=html/body/div/div/main/div/div[2]/div[2]/div/div[3]/div/input').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        # Click on the model input field or dropdown to select 'gpt-4' model explicitly.
+        frame = context.pages[-1]
+        elem = frame.locator('xpath=html/body/div/div/main/div/div[2]/div[2]/div/div[3]/div/input').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        # Try to select the 'gpt-4' model explicitly from the dropdown or autocomplete suggestions to enable running tests.
+        frame = context.pages[-1]
+        elem = frame.locator('xpath=html/body/div/div/main/div/div[2]/div[2]/div/div[3]/div/input').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
         frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/header/div/div[2]/button').nth(0)
+        elem = frame.locator('xpath=html/body/div/div/main/div/div[2]/div[2]/div/div[3]/div/input').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        # Try to select the 'gpt-4' model explicitly from the dropdown or autocomplete suggestions to enable the 'Run Tests' button.
+        frame = context.pages[-1]
+        elem = frame.locator('xpath=html/body/div/div/main/div/div[2]/div[2]/div/div[3]/div/input').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 

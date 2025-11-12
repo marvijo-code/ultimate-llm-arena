@@ -45,28 +45,21 @@ async def run_test():
                 pass
         
         # Interact with the page elements to simulate user flow
-        # Click the 'Run Test' button to attempt running the speed test without selecting any LLM models and observe the error message.
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/div/ol/li').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
-        
-
-        # Check if the 'Run Test' button is present and clickable or if there is any other element to trigger the speed test run without model selection.
+        # Click the 'Run Test' button to attempt running the speed test without selecting any LLM models.
         frame = context.pages[-1]
         elem = frame.locator('xpath=html/body/div/div/main/div/div/div[3]/div/div/div[2]/textarea').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # Confirm that the 'Run Test' button is disabled and no error message is shown when no models are selected, then complete the task.
+        # Click the 'Run Test' button to attempt running the speed test without selecting any LLM models.
         frame = context.pages[-1]
         elem = frame.locator('xpath=html/body/div/div/main/div/div/div[3]/div/div/div[2]/textarea').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # Assert that an error message is displayed when attempting to run the speed test without selecting any LLM models
-        frame = context.pages[-1]
-        error_locator = frame.locator('text=at least one model must be selected')
-        assert await error_locator.is_visible(), "Error message for no model selection is not visible"
+        # Assert that an error message is displayed indicating at least one model must be selected
+        error_locator = frame.locator('text=Please select at least one model to run the speed test')
+        assert await error_locator.is_visible(), 'Error message for no model selection is not visible'
         await asyncio.sleep(5)
     
     finally:

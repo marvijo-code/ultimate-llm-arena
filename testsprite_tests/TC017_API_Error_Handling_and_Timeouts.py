@@ -45,25 +45,46 @@ async def run_test():
                 pass
         
         # Interact with the page elements to simulate user flow
-        # Simulate API failure or timeout when fetching models
+        # Simulate API failure during speed test execution
         frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/header/div/div[2]/button[2]').nth(0)
+        elem = frame.locator('xpath=html/body/div/div/header/div/div[2]/button').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # Simulate API failure or timeout when fetching models by selecting a provider from dropdown
+        # Simulate API failure during speed test execution
         frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/main/div/div[2]/div[2]/div/div/div[2]/button').nth(0)
+        elem = frame.locator('xpath=html/body/div').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # Navigate to speed test page or feature to simulate API failure during speed test execution
+        # Simulate failure response for Exercism challenge run by selecting exercise, number of tests, and attempting to run tests to trigger error.
         frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div[2]/div').nth(0)
+        elem = frame.locator('xpath=html/body/div/div/main/div/div[2]/div[2]/div/div/select').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        assert False, 'Generic failure assertion as expected result is unknown'
+        # Select up to 3 models from the 'Search models' input to enable running the Exercism challenge tests.
+        frame = context.pages[-1]
+        elem = frame.locator('xpath=html/body/div/div/main/div/div[2]/div[2]/div/div[3]/div/input').nth(0)
+        await page.wait_for_timeout(3000); await elem.fill('openai/gpt-4')
+        
+
+        frame = context.pages[-1]
+        elem = frame.locator('xpath=html/body/div/div/main/div/div[2]/div[2]/div/div[3]/div/input').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        frame = context.pages[-1]
+        elem = frame.locator('xpath=html/body/div/div/main/div/div[2]/div[2]/div/div[3]/div/input').nth(0)
+        await page.wait_for_timeout(3000); await elem.fill('anthropic/claude-v1')
+        
+
+        frame = context.pages[-1]
+        elem = frame.locator('xpath=html/body/div/div/main/div/div[2]/div[2]/div/div[3]/div/input').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        assert False, 'Test plan execution failed: generic failure assertion.'
         await asyncio.sleep(5)
     
     finally:

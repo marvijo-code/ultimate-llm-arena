@@ -51,15 +51,30 @@ async def run_test():
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # Find and click the button or link to add/create a new LLM provider
+        # Click on 'Browse & Add Models' button to start adding a new LLM provider
         frame = context.pages[-1]
         elem = frame.locator('xpath=html/body/div/div/main/div/div[2]/div/button').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # Look for a button or link to add/create a new LLM provider
+        # Locate and click the button or link to add a new LLM provider
+        await page.mouse.wheel(0, window.innerHeight)
+        
+
         frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/main/div/div[2]/div/button[2]').nth(0)
+        elem = frame.locator('xpath=html/body/div/div/header/div/div/button').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        # Click on 'Manage LLMs' button to access LLM providers management
+        frame = context.pages[-1]
+        elem = frame.locator('xpath=html/body/div/div/header/div/div[2]/button[2]').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        # Click on the provider dropdown to check if there is an option to add a new provider or to select an existing one
+        frame = context.pages[-1]
+        elem = frame.locator('xpath=html/body/div/div/main/div/div[2]/div[2]/div/div/div[2]/button').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 

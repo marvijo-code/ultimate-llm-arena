@@ -51,30 +51,22 @@ async def run_test():
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # Look for API Key Management or connectivity test section or button
+        # Look for API Key Management or similar section to input and test API keys
         await page.mouse.wheel(0, window.innerHeight)
         
 
-        # Try to find API Key Management or connectivity test by clicking on 'Manage Saved Models' or other navigation options
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/main/div/div[2]/div/button[2]').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        # Look for other navigation or menu options to find API Key Management or API key input page
+        await page.mouse.wheel(0, -window.innerHeight)
         
 
-        # Click on 'Browse & Add Models' tab to check if API key management or connectivity test options are available there.
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/main/div/div[2]/div/button').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
-        
-
-        # Click on 'Select a provider...' dropdown to check if API key input or connectivity test options appear after selecting a provider.
+        # Click on 'Select a provider...' dropdown to check if API key management or connectivity test options appear
         frame = context.pages[-1]
         elem = frame.locator('xpath=html/body/div/div/main/div/div[2]/div[2]/div/div/div[2]/button').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
         # Generic failing assertion since expected result is unknown
-        assert False, 'Test plan execution failed: connectivity test did not return expected results.'
+        assert False, 'Test plan execution failed: connectivity test did not return expected results'
         await asyncio.sleep(5)
     
     finally:

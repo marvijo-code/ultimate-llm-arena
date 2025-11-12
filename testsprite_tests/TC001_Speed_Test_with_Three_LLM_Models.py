@@ -45,13 +45,25 @@ async def run_test():
                 pass
         
         # Interact with the page elements to simulate user flow
-        # Try to select three different LLM models from the dropdown
+        # Check if there is any way to reload models or manage LLMs to fix the model loading issue.
         frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/main/div/div/div/div/div/div[2]/input').nth(0)
+        elem = frame.locator('xpath=html/body/div/div/header/div/div[2]/button[2]').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        assert False, 'Test plan execution failed: generic failure assertion'
+        # Open the provider dropdown to select an LLM provider to browse models.
+        frame = context.pages[-1]
+        elem = frame.locator('xpath=html/body/div/div/main/div/div[2]/div[2]/div/div/div[2]/button').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        # Select an LLM provider from the dropdown to browse available models.
+        frame = context.pages[-1]
+        elem = frame.locator('xpath=html/body/div[2]/div').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        assert False, 'Test failed: Expected result unknown, forcing failure.'
         await asyncio.sleep(5)
     
     finally:

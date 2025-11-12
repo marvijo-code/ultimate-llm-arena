@@ -45,54 +45,13 @@ async def run_test():
                 pass
         
         # Interact with the page elements to simulate user flow
-        # Select a single model to run the test
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/header/div/div[2]/button').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
-        
-
-        # Select a single model by typing in the model search input
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/main/div/div[2]/div[2]/div/div[3]/div/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('gpt-4')
-        
-
-        # Select the gpt-4 model from the search results and run the test
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/header/div/div/button').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
-        
-
-        # Select a single model by typing 'gpt-4' in the model search input
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/main/div/div/div/div/div/div[2]/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('gpt-4')
-        
-
-        # Select the 'gpt-4' model from the search results to add it to the test
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
-        
-
-        # Try to clear the model search input and re-enter 'gpt-4' to refresh the model selection UI
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/main/div/div/div/div/div/div[2]/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('')
-        
-
-        frame = context.pages[-1]
-        elem = frame.locator('xpath=html/body/div/div/main/div/div/div/div/div/div[2]/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('gpt-4')
-        
-
-        # Try to click on the model search input suggestions or dropdown to see if any selectable model options appear
+        # Select a single model to enable streaming test and input a test prompt if needed.
         frame = context.pages[-1]
         elem = frame.locator('xpath=html/body/div/div/main/div/div/div/div/div/div[2]/input').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        assert False, 'Test plan execution failed: generic failure assertion.'
+        assert False, 'Test failed: Expected streaming response not received or SSE connection error.'
         await asyncio.sleep(5)
     
     finally:
