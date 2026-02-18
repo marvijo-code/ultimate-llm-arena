@@ -132,6 +132,28 @@ class SQLiteDB {
       results TEXT NOT NULL,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     )`);
+
+    this.db.execute(`CREATE TABLE IF NOT EXISTS repo_test_runs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      repo_url TEXT NOT NULL,
+      ref TEXT NOT NULL,
+      prompt TEXT NOT NULL,
+      test_command TEXT NOT NULL,
+      tool TEXT NOT NULL,
+      model TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'pending',
+      clone_duration_ms INTEGER,
+      tool_duration_ms INTEGER,
+      test_duration_ms INTEGER,
+      total_duration_ms INTEGER,
+      tests_passed INTEGER DEFAULT 0,
+      tests_failed INTEGER DEFAULT 0,
+      tests_total INTEGER DEFAULT 0,
+      test_output TEXT,
+      tool_output TEXT,
+      error TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )`);
   }
 
   private seedProviders() {
@@ -370,6 +392,50 @@ class SQLiteDB {
   getCodeEvalRuns(limit: number = 50): any[] {
     const rows = this.query<any>("SELECT * FROM code_eval_runs ORDER BY created_at DESC LIMIT ?", [limit]);
     return rows.map((r) => ({ ...r, models: JSON.parse(r.models), results: JSON.parse(r.results) }));
+  }
+
+  // Repo test runs
+  saveRepoTestRun(run: {
+    repo_url: string; ref: string; prompt: string; test_command: string;
+    tool: string; model: string; status: string;
+    clone_duration_ms?: number; tool_duration_ms?: number; test_duration_ms?: number; total_duration_ms?: number;
+    tests_passed?: number; tests_failed?: number; tests_total?: number;
+    test_output?: string; tool_output?: string; error?: string;
+  }): number {
+    const res = this.execute(
+      `INSERT INTO repo_test_runs (repo_url, ref, prompt, test_command, tool, model, status, clone_duration_ms, tool_duration_ms, test_duration_ms, total_duration_ms, tests_passed, tests_failed, tests_total, test_output, tool_output, error)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [run.repo_url, run.ref, run.prompt, run.test_command, run.tool, run.model, run.status,
+       run.clone_duration_ms ?? null, run.tool_duration_ms ?? null, run.test_duration_ms ?? null, run.total_duration_ms ?? null,
+       run.tests_passed ?? 0, run.tests_failed ?? 0, run.tests_total ?? 0,
+       run.test_output ?? null, run.tool_output ?? null, run.error ?? null]
+    );
+    return res.lastInsertRowId;
+  }
+
+  updateRepoTestRun(id: number, updates: Record<string, any>): boolean {
+    const allowed = ["status","clone_duration_ms","tool_duration_ms","test_duration_ms","total_duration_ms","tests_passed","tests_failed","tests_total","test_output","tool_output","error"];
+    const fields: string[] = [];
+    const params: any[] = [];
+    for (const key of allowed) {
+      if (key in updates) {
+        fields.push(`${key} = ?`);
+        params.push(updates[key]);
+      }
+    }
+    if (fields.length === 0) return false;
+    params.push(id);
+    const res = this.execute(`UPDATE repo_test_runs SET ${fields.join(", ")} WHERE id = ?`, params);
+    return res.changes > 0;
+  }
+
+  getRepoTestRuns(limit: number = 50): any[] {
+    return this.query<any>("SELECT * FROM repo_test_runs ORDER BY created_at DESC LIMIT ?", [limit]);
+  }
+
+  getRepoTestRun(id: number): any | undefined {
+    const rows = this.query<any>("SELECT * FROM repo_test_runs WHERE id = ?", [id]);
+    return rows[0];
   }
 }
 

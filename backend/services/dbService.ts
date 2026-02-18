@@ -217,4 +217,27 @@ export class DbService {
   static getCodeEvalRuns(limit = 50): CodeEvalRun[] {
     return db.getCodeEvalRuns(limit) as any;
   }
+
+  // Repo test runs
+  static saveRepoTestRun(run: {
+    repo_url: string; ref: string; prompt: string; test_command: string;
+    tool: string; model: string; status: string;
+    clone_duration_ms?: number; tool_duration_ms?: number; test_duration_ms?: number; total_duration_ms?: number;
+    tests_passed?: number; tests_failed?: number; tests_total?: number;
+    test_output?: string; tool_output?: string; error?: string;
+  }): number {
+    return db.saveRepoTestRun(run);
+  }
+
+  static updateRepoTestRun(id: number, updates: Record<string, any>): boolean {
+    return db.updateRepoTestRun(id, updates);
+  }
+
+  static getRepoTestRuns(limit = 50): any[] {
+    return db.getRepoTestRuns(limit);
+  }
+
+  static getRepoTestRun(id: number): any | undefined {
+    return db.getRepoTestRun(id);
+  }
 }

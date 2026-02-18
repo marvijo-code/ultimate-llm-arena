@@ -5,13 +5,14 @@ import { SpeedTestInterface } from '@/components/SpeedTestInterface'
 import { Dashboard } from '@/components/Dashboard'
 import LLMManagement from '@/components/LLMManagement'
 import ExercismArena from '@/components/ExercismArena'
+import RepoTestArena from '@/components/RepoTestArena'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Toaster } from '@/components/ui/toaster'
-import { Activity, Zap, Settings, ArrowLeft } from 'lucide-react'
+import { Activity, Zap, Settings, ArrowLeft, GitBranch } from 'lucide-react'
 
 function App() {
-  const [currentView, setCurrentView] = useState<'arena' | 'dashboard' | 'llm-management' | 'exercism'>('arena');
+  const [currentView, setCurrentView] = useState<'arena' | 'dashboard' | 'llm-management' | 'exercism' | 'repo-test'>('arena');
 
   return (
     <ThemeProvider defaultTheme="dark" storageKey="llm-speed-test-theme">
@@ -47,6 +48,14 @@ function App() {
                   <Button
                     variant="ghost"
                     size="sm"
+                    onClick={() => setCurrentView('repo-test')}
+                  >
+                    <GitBranch className="h-4 w-4 mr-1" />
+                    Repo Test
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() => setCurrentView('exercism')}
                   >
                     Exercism
@@ -74,6 +83,8 @@ function App() {
             <Dashboard onBack={() => setCurrentView('arena')} />
           ) : currentView === 'exercism' ? (
             <ExercismArena onBack={() => setCurrentView('arena')} />
+          ) : currentView === 'repo-test' ? (
+            <RepoTestArena onBack={() => setCurrentView('arena')} />
           ) : (
             <LLMManagement />
           )}

@@ -147,6 +147,73 @@ export interface CodeEvalRun {
   created_at: string;
 }
 
+// Repo Test Arena types
+export interface CodingTool {
+  id: string;
+  name: string;
+  description: string;
+  command: string[];
+  apiKeyEnvVar?: string;
+}
+
+export interface RepoTestIterationResult {
+  iteration: number;
+  tool_output: string;
+  test_exit_code: number;
+  test_stdout: string;
+  test_stderr: string;
+  tests_passed: number;
+  tests_failed: number;
+  tests_total: number;
+  duration_ms: number;
+}
+
+export interface RepoTestResult {
+  runId: number;
+  repo_url: string;
+  ref: string;
+  prompt: string;
+  test_command: string;
+  tool: string;
+  model: string;
+  status: "success" | "partial" | "fail" | "error";
+  iterations: RepoTestIterationResult[];
+  clone_duration_ms: number;
+  total_duration_ms: number;
+  final_tests_passed: number;
+  final_tests_failed: number;
+  final_tests_total: number;
+  error?: string;
+}
+
+export interface RepoTestProgressEvent {
+  type: "status" | "clone" | "iteration_start" | "tool_output" | "test_result" | "complete" | "error";
+  message: string;
+  data?: any;
+}
+
+export interface RepoTestHistoryEntry {
+  id: number;
+  repo_url: string;
+  ref: string;
+  prompt: string;
+  test_command: string;
+  tool: string;
+  model: string;
+  status: string;
+  clone_duration_ms: number;
+  tool_duration_ms: number;
+  test_duration_ms: number;
+  total_duration_ms: number;
+  tests_passed: number;
+  tests_failed: number;
+  tests_total: number;
+  test_output: string;
+  tool_output: string;
+  error: string;
+  created_at: string;
+}
+
 class ApiService {
   private async request<T>(
     endpoint: string,
@@ -352,6 +419,73 @@ class ApiService {
 
     const queryString = params.toString();
     return this.request<RunStats[]>(`/api/run-stats${queryString ? '?' + queryString : ''}`);
+  }
+
+  // Repo Test Arena endpoints
+  async getRepoTestTools() {
+    return this.request<CodingTool[]>('/api/repo-test/tools');
+  }
+
+  async runRepoTestStream(
+    request: { repo_url: string; ref: string; prompt: string; test_command: string; tool: string; model: string },
+    onEvent: (event: RepoTestProgressEvent) => void
+  ): Promise<void> {
+    const url = `${API_BASE_URL}/api/repo-test/run`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(request),
+    });
+
+    if (!response.ok) {
+      const errBody = await response.text();
+      throw new Error(`HTTP error ${response.status}: ${errBody}`);
+    }
+
+    const reader = response.body?.getReader();
+    if (!reader) throw new Error('No response body reader available');
+
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') continue;
+            try {
+              const event: RepoTestProgressEvent = JSON.parse(data);
+              onEvent(event);
+            } catch { /* ignore parse errors */ }
+          }
+        }
+      }
+    } finally {
+      reader.releaseLock();
+    }
+  }
+
+  async runRepoTestSync(request: { repo_url: string; ref: string; prompt: string; test_command: string; tool: string; model: string }) {
+    return this.request<RepoTestResult>('/api/repo-test/run-sync', {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+  }
+
+  async getRepoTestHistory(limit = 50) {
+    return this.request<RepoTestHistoryEntry[]>(`/api/repo-test/history?limit=${limit}`);
+  }
+
+  async getRepoTestRun(id: number) {
+    return this.request<RepoTestHistoryEntry>(`/api/repo-test/runs/${id}`);
   }
 }
 

@@ -3,6 +3,7 @@ import { oakCors } from "https://deno.land/x/cors@v1.2.2/mod.ts";
 import openRouterRoutes from "./routes/openRouter.ts";
 import speedTestRoutes from "./routes/speedTest.ts";
 import exercismRoutes from "./routes/exercism.ts";
+import repoTestRoutes from "./routes/repoTest.ts";
 import { saveRunHistory, getRunHistory, getRunStats } from "./routes/runHistory.ts";
 import { LLMManagementHandler } from "./routes/llmManagement.ts";
 import { DbService } from "./services/dbService.ts";
@@ -275,6 +276,9 @@ app.use(speedTestRoutes.allowedMethods());
 
 app.use(exercismRoutes.routes());
 app.use(exercismRoutes.allowedMethods());
+
+app.use(repoTestRoutes.routes());
+app.use(repoTestRoutes.allowedMethods());
 
 
 // Start the server

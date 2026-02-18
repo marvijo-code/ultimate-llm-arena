@@ -1,6 +1,8 @@
 import { OpenRouterService } from "./openRouterService.ts";
 import { DbService } from "./dbService.ts";
 
+type CodeGeneratorOverride = (model: string, prompt: string) => Promise<string>;
+
 export interface Exercise {
   id: string;
   name: string;
@@ -44,6 +46,13 @@ import { ACRONYM_CASES } from "../exercism/acronym/cases.ts";
 
 
 export class ExercismService {
+  private static codeGeneratorOverride?: CodeGeneratorOverride;
+
+  // Allows tests to stub the LLM call.
+  static setCodeGeneratorOverride(override?: CodeGeneratorOverride) {
+    this.codeGeneratorOverride = override;
+  }
+
   static listExercises(): Exercise[] {
     return [
       { id: "isogram", name: "Isogram", language: "javascript", totalTests: ISOGRAM_CASES.length },
@@ -98,6 +107,9 @@ export class ExercismService {
   }
 
   private static async generateSolutionCode(model: string, prompt: string): Promise<string> {
+    if (this.codeGeneratorOverride) {
+      return await this.codeGeneratorOverride(model, prompt);
+    }
     // Use OpenRouter with stored API key
     const apiKeyRecord = DbService.getApiKey("OPENROUTER_API_KEY", "OpenRouter");
     if (!apiKeyRecord?.key_value) throw new Error("OpenRouter API key not configured");
@@ -329,4 +341,3 @@ export class ExercismService {
     return DbService.getCodeEvalRuns(limit);
   }
 }
-
