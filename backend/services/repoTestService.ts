@@ -50,6 +50,33 @@ export const CODING_TOOLS: CodingTool[] = [
   },
 ];
 
+// Check if a CLI tool is installed and available
+async function checkToolAvailable(command: string[]): Promise<boolean> {
+  if (command.length === 0) return true; // OpenRouter Direct is always available
+  
+  const toolName = command[0];
+  try {
+    const cmd = new Deno.Command(toolName, {
+      args: ["--version"],
+      stdout: "piped",
+      stderr: "piped",
+    });
+    const result = await cmd.output();
+    return result.success;
+  } catch {
+    return false;
+  }
+}
+
+export interface ToolAvailability {
+  id: string;
+  name: string;
+  description: string;
+  available: boolean;
+  apiKeyEnvVar?: string;
+  apiKeyConfigured?: boolean;
+}
+
 export interface RepoTestRequest {
   repo_url: string;
   ref: string;             // SHA, branch, or tag
@@ -99,8 +126,36 @@ const MAX_ITERATIONS = 2;
 
 export class RepoTestService {
 
-  static listTools(): CodingTool[] {
-    return CODING_TOOLS;
+  static async listTools(): Promise<ToolAvailability[]> {
+    const apiKeyRecord = DbService.getApiKey("OPENROUTER_API_KEY", "OpenRouter");
+    const openRouterKeyConfigured = !!apiKeyRecord?.key_value;
+
+    const tools: ToolAvailability[] = [];
+
+    for (const tool of CODING_TOOLS) {
+      const available = tool.id === "openrouter-direct" 
+        ? openRouterKeyConfigured 
+        : await checkToolAvailable(tool.command);
+
+      let apiKeyConfigured: boolean | undefined;
+      if (tool.apiKeyEnvVar === "OPENROUTER_API_KEY") {
+        apiKeyConfigured = openRouterKeyConfigured;
+      } else if (tool.apiKeyEnvVar) {
+        const key = DbService.getApiKey(tool.apiKeyEnvVar, tool.name);
+        apiKeyConfigured = !!key?.key_value;
+      }
+
+      tools.push({
+        id: tool.id,
+        name: tool.name,
+        description: tool.description,
+        available,
+        apiKeyEnvVar: tool.apiKeyEnvVar,
+        apiKeyConfigured,
+      });
+    }
+
+    return tools;
   }
 
   static async run(request: RepoTestRequest, onProgress?: ProgressCallback): Promise<RepoTestResult> {
@@ -350,6 +405,9 @@ export class RepoTestService {
           }
         }
         await installCmd.output();
+
+        // Exercism JS workaround: some exercises need babel preset installed separately
+        await this.installExercismBabelPreset(workdir);
       }
     } catch { /* no package.json */ }
 
@@ -360,6 +418,27 @@ export class RepoTestService {
         await cmd.output();
       }
     } catch { /* no requirements.txt */ }
+  }
+
+  // Exercism JavaScript repo workaround: exercises need @exercism/babel-preset-javascript
+  private static async installExercismBabelPreset(workdir: string): Promise<void> {
+    try {
+      // Check if this looks like an Exercism exercise
+      const babelConfig = await Deno.readTextFile(`${workdir}/babel.config.js`).catch(() => null);
+      const babelConfigJson = await Deno.readTextFile(`${workdir}/babel.config.json`).catch(() => null);
+      
+      const config = babelConfig || babelConfigJson || "";
+      if (!config.includes("exercism")) return;
+
+      // Try to install the babel preset
+      const cmd = new Deno.Command("npm", {
+        args: ["install", "--save-dev", "@exercism/babel-preset-javascript"],
+        cwd: workdir,
+        stdout: "piped",
+        stderr: "piped",
+      });
+      await cmd.output();
+    } catch { /* ignore errors */ }
   }
 
   private static async runCodingTool(tool: CodingTool, model: string, prompt: string, workdir: string): Promise<string> {
@@ -621,21 +700,39 @@ export class RepoTestService {
       return { passed, failed, total };
     }
 
-    // pytest: "X passed, Y failed" or "X passed"
-    const pytestMatch = output.match(/(\d+)\s+passed(?:,\s+(\d+)\s+failed)?/);
-    if (pytestMatch) {
-      passed = parseInt(pytestMatch[1] || "0");
-      failed = parseInt(pytestMatch[2] || "0");
-      total = passed + failed;
-      return { passed, failed, total };
-    }
-
-    // pytest: "Y failed, X passed"
-    const pytestMatch2 = output.match(/(\d+)\s+failed(?:,\s+(\d+)\s+passed)?/);
+    // pytest: "Y failed, X passed" - check this BEFORE "X passed" alone to capture both numbers
+    const pytestMatch2 = output.match(/(\d+)\s+failed[,\s]+(\d+)\s+passed/);
     if (pytestMatch2) {
       failed = parseInt(pytestMatch2[1] || "0");
       passed = parseInt(pytestMatch2[2] || "0");
       total = passed + failed;
+      return { passed, failed, total };
+    }
+
+    // pytest: "X passed, Y failed" 
+    const pytestMatch3 = output.match(/(\d+)\s+passed[,\s]+(\d+)\s+failed/);
+    if (pytestMatch3) {
+      passed = parseInt(pytestMatch3[1] || "0");
+      failed = parseInt(pytestMatch3[2] || "0");
+      total = passed + failed;
+      return { passed, failed, total };
+    }
+
+    // pytest: "X passed" only (all passed)
+    const pytestMatch = output.match(/(\d+)\s+passed(?!,\s*\d+\s+failed)/);
+    if (pytestMatch) {
+      passed = parseInt(pytestMatch[1] || "0");
+      failed = 0;
+      total = passed;
+      return { passed, failed, total };
+    }
+
+    // pytest: "Y failed" only (all failed)
+    const pytestMatch4 = output.match(/(\d+)\s+failed(?!,\s*\d+\s+passed)/);
+    if (pytestMatch4) {
+      failed = parseInt(pytestMatch4[1] || "0");
+      passed = 0;
+      total = failed;
       return { passed, failed, total };
     }
 

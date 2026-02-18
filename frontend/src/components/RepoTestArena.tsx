@@ -3,14 +3,16 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Play, CheckCircle2, AlertCircle, GitBranch, Terminal, Clock, RotateCcw, ChevronDown, ChevronUp } from 'lucide-react';
-import { apiService, type CodingTool, type RepoTestProgressEvent, type RepoTestResult, type RepoTestHistoryEntry } from '@/services/api';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Loader2, Play, CheckCircle2, AlertCircle, GitBranch, Terminal, Clock, RotateCcw, ChevronDown, ChevronUp, Trophy, Users } from 'lucide-react';
+import { apiService, type CodingTool, type RepoTestProgressEvent, type RepoTestResult, type RepoTestHistoryEntry, type OpenRouterFreeModel, type BatchLeaderboardEntry, type BatchProgressEvent } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface Props { onBack?: () => void }
 
-const FREE_MODELS = [
+// Fallback free models if API fails
+const FALLBACK_MODELS: OpenRouterFreeModel[] = [
   { id: "deepseek/deepseek-r1-0528:free", name: "DeepSeek R1", provider: "DeepSeek" },
   { id: "qwen/qwen3-coder:free", name: "Qwen 3 Coder", provider: "Qwen" },
   { id: "openai/gpt-oss-120b:free", name: "GPT-OSS 120B", provider: "OpenAI" },
@@ -32,24 +34,29 @@ export default function RepoTestArena({ onBack }: Props) {
   const [prompt, setPrompt] = useState('');
   const [testCommand, setTestCommand] = useState('npm test');
   const [selectedTool, setSelectedTool] = useState('openrouter-direct');
-  const [selectedModel, setSelectedModel] = useState(FREE_MODELS[0].id);
+  const [selectedModels, setSelectedModels] = useState<string[]>([FALLBACK_MODELS[0].id]);
   const [customModel, setCustomModel] = useState('');
 
   // Run state
   const [isRunning, setIsRunning] = useState(false);
-  const [progressLog, setProgressLog] = useState<RepoTestProgressEvent[]>([]);
+  const [isBatchMode, setIsBatchMode] = useState(false);
+  const [progressLog, setProgressLog] = useState<(RepoTestProgressEvent | BatchProgressEvent)[]>([]);
   const [result, setResult] = useState<RepoTestResult | null>(null);
+  const [batchLeaderboard, setBatchLeaderboard] = useState<BatchLeaderboardEntry[] | null>(null);
 
   // History state
   const [history, setHistory] = useState<RepoTestHistoryEntry[]>([]);
   const [showHistory, setShowHistory] = useState(false);
 
-  // Tools
+  // Tools and models
   const [tools, setTools] = useState<CodingTool[]>([]);
+  const [availableModels, setAvailableModels] = useState<OpenRouterFreeModel[]>(FALLBACK_MODELS);
+  const [modelsLoading, setModelsLoading] = useState(true);
 
   // Expanded iteration details
   const [expandedIteration, setExpandedIteration] = useState<number | null>(null);
 
+  // Fetch tools and models on mount
   useEffect(() => {
     (async () => {
       try {
@@ -57,6 +64,26 @@ export default function RepoTestArena({ onBack }: Props) {
         const data = (res as any).data ?? res;
         if (Array.isArray(data)) setTools(data);
       } catch { /* ignore */ }
+    })();
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        setModelsLoading(true);
+        const models = await apiService.getRepoTestModels();
+        if (models.length > 0) {
+          setAvailableModels(models);
+          // Keep first model selected if current selection not in new list
+          if (!models.some(m => m.id === selectedModels[0])) {
+            setSelectedModels([models[0].id]);
+          }
+        }
+      } catch (err) {
+        console.log('Failed to fetch models, using fallback:', err);
+      } finally {
+        setModelsLoading(false);
+      }
     })();
   }, []);
 
@@ -70,6 +97,17 @@ export default function RepoTestArena({ onBack }: Props) {
       const data = (res as any).data ?? res;
       if (Array.isArray(data)) setHistory(data);
     } catch { /* ignore */ }
+  };
+
+  const toggleModelSelection = (modelId: string) => {
+    setSelectedModels(prev => {
+      if (prev.includes(modelId)) {
+        // Don't uncheck if it's the last one
+        if (prev.length === 1) return prev;
+        return prev.filter(id => id !== modelId);
+      }
+      return [...prev, modelId];
+    });
   };
 
   const handleRun = async () => {
@@ -86,31 +124,67 @@ export default function RepoTestArena({ onBack }: Props) {
       return;
     }
 
-    const model = customModel.trim() || selectedModel;
-
     setIsRunning(true);
     setProgressLog([]);
     setResult(null);
+    setBatchLeaderboard(null);
     setExpandedIteration(null);
 
     try {
-      await apiService.runRepoTestStream(
-        { repo_url: repoUrl, ref, prompt, test_command: testCommand, tool: selectedTool, model },
-        (event) => {
-          setProgressLog(prev => [...prev, event]);
-          if (event.type === 'complete' && event.data) {
-            setResult(event.data as RepoTestResult);
-          }
-          if (event.type === 'error') {
-            toast({ variant: 'destructive', title: 'Run failed', description: event.message });
-          }
-        },
-      );
+      if (isBatchMode && selectedModels.length > 1) {
+        await runBatch();
+      } else {
+        await runSingle();
+      }
     } catch (error) {
       toast({ variant: 'destructive', title: 'Run failed', description: (error as Error).message });
     } finally {
       setIsRunning(false);
     }
+  };
+
+  const runSingle = async () => {
+    const model = customModel.trim() || selectedModels[0];
+
+    await apiService.runRepoTestStream(
+      { repo_url: repoUrl, ref, prompt, test_command: testCommand, tool: selectedTool, model },
+      (event) => {
+        setProgressLog(prev => [...prev, event]);
+        if (event.type === 'complete' && event.data) {
+          setResult(event.data as RepoTestResult);
+        }
+        if (event.type === 'error') {
+          toast({ variant: 'destructive', title: 'Run failed', description: event.message });
+        }
+      },
+    );
+  };
+
+  const runBatch = async () => {
+    const models = customModel.trim() ? [customModel.trim(), ...selectedModels] : selectedModels;
+
+    await apiService.runRepoTestBatch(
+      { repo_url: repoUrl, ref, prompt, test_command: testCommand, tool: selectedTool, models },
+      (event) => {
+        setProgressLog(prev => [...prev, event]);
+        
+        if (event.type === 'batch_complete' && event.data?.leaderboard) {
+          setBatchLeaderboard(event.data.leaderboard as BatchLeaderboardEntry[]);
+        }
+        
+        if (event.type === 'model_complete' && event.data?.result) {
+          // Show individual results in progress log
+          const modelResult = event.data.result as RepoTestResult;
+          if (!result) {
+            setResult(modelResult); // Show first model's details
+          }
+        }
+        
+        if (event.type === 'error') {
+          toast({ variant: 'destructive', title: 'Batch error', description: event.message });
+        }
+      },
+    );
   };
 
   const statusColor = (status: string) => {
@@ -133,6 +207,13 @@ export default function RepoTestArena({ onBack }: Props) {
       default: return <Badge variant="outline">{status}</Badge>;
     }
   };
+
+  // Group models by provider
+  const modelsByProvider = availableModels.reduce((acc, model) => {
+    if (!acc[model.provider]) acc[model.provider] = [];
+    acc[model.provider].push(model);
+    return acc;
+  }, {} as Record<string, OpenRouterFreeModel[]>);
 
   return (
     <div className="h-full flex flex-col p-4 space-y-4 overflow-auto">
@@ -192,7 +273,7 @@ export default function RepoTestArena({ onBack }: Props) {
             />
           </div>
 
-          {/* Row 3: Tool + Model + Test Command */}
+          {/* Row 3: Tool + Models + Test Command */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="text-sm font-medium flex items-center gap-1"><Terminal className="h-3.5 w-3.5" /> AI Coding Tool</label>
@@ -202,7 +283,13 @@ export default function RepoTestArena({ onBack }: Props) {
                 onChange={(e) => setSelectedTool(e.target.value)}
               >
                 {tools.length > 0 ? tools.map(t => (
-                  <option key={t.id} value={t.id}>{t.name} - {t.description}</option>
+                  <option 
+                    key={t.id} 
+                    value={t.id}
+                    disabled={!t.available}
+                  >
+                    {t.name} - {t.description} {!t.available ? '(not installed)' : t.apiKeyEnvVar && !t.apiKeyConfigured ? '(API key needed)' : ''}
+                  </option>
                 )) : (
                   <>
                     <option value="openrouter-direct">OpenRouter Direct - API call (no CLI needed)</option>
@@ -213,26 +300,53 @@ export default function RepoTestArena({ onBack }: Props) {
                   </>
                 )}
               </select>
+              {tools.length > 0 && selectedTool && tools.find(t => t.id === selectedTool)?.apiKeyEnvVar && !tools.find(t => t.id === selectedTool)?.apiKeyConfigured && (
+                <div className="text-xs text-amber-500 mt-1">
+                  ⚠️ {tools.find(t => t.id === selectedTool)?.apiKeyEnvVar} not configured
+                </div>
+              )}
             </div>
             <div>
-              <label className="text-sm font-medium">Model</label>
-              <select
-                className="mt-1 w-full border rounded-md bg-background p-2 text-sm"
-                value={selectedModel}
-                onChange={(e) => { setSelectedModel(e.target.value); setCustomModel(''); }}
-              >
-                <optgroup label="Free Models (OpenRouter)">
-                  {FREE_MODELS.map(m => (
-                    <option key={m.id} value={m.id}>{m.name} ({m.provider})</option>
-                  ))}
-                </optgroup>
-              </select>
+              <label className="text-sm font-medium flex items-center gap-1"><Users className="h-3.5 w-3.5" /> Models {modelsLoading && <Loader2 className="h-3 w-3 animate-spin" />}</label>
+              
+              {/* Batch mode toggle */}
+              <div className="flex items-center gap-2 mt-1 mb-2">
+                <Checkbox
+                  id="batchMode"
+                  checked={isBatchMode}
+                  onCheckedChange={(checked) => setIsBatchMode(checked as boolean)}
+                />
+                <label htmlFor="batchMode" className="text-xs cursor-pointer">Compare multiple models</label>
+              </div>
+
+              {/* Model selection */}
+              <ScrollArea className="h-[150px] border rounded-md p-2">
+                {Object.entries(modelsByProvider).map(([provider, models]) => (
+                  <div key={provider} className="mb-2">
+                    <div className="text-xs font-semibold text-muted-foreground mb-1">{provider}</div>
+                    {models.map(m => (
+                      <div key={m.id} className="flex items-center gap-2 py-0.5">
+                        <Checkbox
+                          id={m.id}
+                          checked={selectedModels.includes(m.id)}
+                          onCheckedChange={() => toggleModelSelection(m.id)}
+                        />
+                        <label htmlFor={m.id} className="text-xs cursor-pointer truncate">{m.name}</label>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </ScrollArea>
+
               <Input
                 className="mt-1"
                 placeholder="Or enter custom model ID..."
                 value={customModel}
                 onChange={(e) => setCustomModel(e.target.value)}
               />
+              <div className="text-xs text-muted-foreground mt-1">
+                {isBatchMode ? `${selectedModels.length} model(s) selected` : 'Select one or more models'}
+              </div>
             </div>
             <div>
               <label className="text-sm font-medium">Test Command</label>
@@ -248,15 +362,16 @@ export default function RepoTestArena({ onBack }: Props) {
 
           {/* Run button */}
           <div className="flex items-center gap-3">
-            <Button onClick={handleRun} disabled={isRunning} className="min-w-[140px]">
+            <Button onClick={handleRun} disabled={isRunning} className="min-w-[180px]">
               {isRunning ? (
                 <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Running...</>
               ) : (
-                <><Play className="mr-2 h-4 w-4" />Run Benchmark</>
+                <><Play className="mr-2 h-4 w-4" />{isBatchMode ? `Run Batch (${selectedModels.length})` : 'Run Benchmark'}</>
               )}
             </Button>
             <div className="text-xs text-muted-foreground">
               Max 2 iterations. Iteration 1: prompt only. Iteration 2: prompt + test failure output (no test source code).
+              {isBatchMode && ' Batch mode runs all selected models in parallel.'}
             </div>
           </div>
         </CardContent>
@@ -277,9 +392,9 @@ export default function RepoTestArena({ onBack }: Props) {
               <div className="p-4 font-mono text-xs space-y-1">
                 {progressLog.map((event, i) => (
                   <div key={i} className={`flex items-start gap-2 ${
-                    event.type === 'error' ? 'text-red-400' :
-                    event.type === 'complete' ? 'text-green-400' :
-                    event.type === 'test_result' ? 'text-yellow-400' :
+                    event.type === 'error' || event.type === 'model_error' ? 'text-red-400' :
+                    event.type === 'complete' || event.type === 'batch_complete' ? 'text-green-400' :
+                    event.type === 'test_result' || event.type === 'model_complete' ? 'text-yellow-400' :
                     'text-muted-foreground'
                   }`}>
                     <span className="text-muted-foreground/50 select-none w-6 text-right shrink-0">{i + 1}</span>
@@ -293,8 +408,60 @@ export default function RepoTestArena({ onBack }: Props) {
         </Card>
       )}
 
-      {/* Results */}
-      {result && (
+      {/* Batch Leaderboard */}
+      {batchLeaderboard && batchLeaderboard.length > 0 && (
+        <Card className="border-purple-500/40">
+          <CardHeader className="py-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Trophy className="h-5 w-5 text-yellow-500" />
+              Batch Results Leaderboard
+              <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">{batchLeaderboard.length} models</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {batchLeaderboard.map((entry, idx) => (
+                <div key={entry.model} className={`flex items-center justify-between p-3 rounded-lg border ${
+                  idx === 0 ? 'bg-yellow-500/10 border-yellow-500/30' :
+                  idx === 1 ? 'bg-slate-400/10 border-slate-400/30' :
+                  idx === 2 ? 'bg-orange-600/10 border-orange-600/30' :
+                  'bg-muted/30'
+                }`}>
+                  <div className="flex items-center gap-4">
+                    <div className="text-lg font-bold w-8 text-center">
+                      {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : idx + 1}
+                    </div>
+                    <div>
+                      <div className="font-medium text-sm">{entry.model}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {entry.iterations} iteration{entry.iterations !== 1 ? 's' : ''} • {(entry.duration_ms / 1000).toFixed(1)}s
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <div className={`text-lg font-bold ${
+                        entry.status === 'success' ? 'text-green-400' :
+                        entry.status === 'partial' ? 'text-yellow-400' :
+                        'text-red-400'
+                      }`}>
+                        {entry.tests_passed}/{entry.tests_total}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {entry.tests_total > 0 ? ((entry.tests_passed / entry.tests_total) * 100).toFixed(0) : 0}% pass rate
+                      </div>
+                    </div>
+                    {statusBadge(entry.status)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Single Run Results */}
+      {result && !batchLeaderboard && (
         <Card className={`border ${
           result.status === 'success' ? 'border-green-500/40' :
           result.status === 'partial' ? 'border-yellow-500/40' :

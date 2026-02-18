@@ -152,8 +152,34 @@ export interface CodingTool {
   id: string;
   name: string;
   description: string;
-  command: string[];
+  available: boolean;
   apiKeyEnvVar?: string;
+  apiKeyConfigured?: boolean;
+}
+
+export interface OpenRouterFreeModel {
+  id: string;
+  name: string;
+  provider: string;
+  description?: string;
+  context_length?: number;
+}
+
+export interface BatchLeaderboardEntry {
+  model: string;
+  status: "success" | "partial" | "fail" | "error";
+  tests_passed: number;
+  tests_total: number;
+  tests_failed: number;
+  duration_ms: number;
+  iterations: number;
+  error?: string;
+}
+
+export interface BatchProgressEvent {
+  type: "batch_start" | "model_start" | "model_progress" | "model_complete" | "model_error" | "batch_complete" | "error";
+  message: string;
+  data?: any;
 }
 
 export interface RepoTestIterationResult {
@@ -486,6 +512,58 @@ class ApiService {
 
   async getRepoTestRun(id: number) {
     return this.request<RepoTestHistoryEntry>(`/api/repo-test/runs/${id}`);
+  }
+
+  async getRepoTestModels(): Promise<OpenRouterFreeModel[]> {
+    const res = await this.request<OpenRouterFreeModel[]>('/api/repo-test/models');
+    return (res as any).data ?? res ?? [];
+  }
+
+  async runRepoTestBatch(
+    request: { repo_url: string; ref: string; prompt: string; test_command: string; tool: string; models: string[] },
+    onEvent: (event: BatchProgressEvent) => void
+  ): Promise<void> {
+    const url = `${API_BASE_URL}/api/repo-test/batch`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(request),
+    });
+
+    if (!response.ok) {
+      const errBody = await response.text();
+      throw new Error(`HTTP error ${response.status}: ${errBody}`);
+    }
+
+    const reader = response.body?.getReader();
+    if (!reader) throw new Error('No response body reader available');
+
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') continue;
+            try {
+              const event: BatchProgressEvent = JSON.parse(data);
+              onEvent(event);
+            } catch { /* ignore parse errors */ }
+          }
+        }
+      }
+    } finally {
+      reader.releaseLock();
+    }
   }
 }
 
